@@ -14,7 +14,7 @@ You can run this script remotely using the –AdminAddress (AA) parameter.
 This script supports versions of CVAD starting with 2603.
 
 If you are running XA/XD 7.0 through 7.7, please use: 
-https://carlwebster.com/downloads/download-info/xenappxendesktop-7-x-documentation-script/
+https://github.com/CarlWebster/Citrix-XenApp-XenDesktop-7-V1
 
 If you are running XA/XD 7.8 through CVAD 2006, please use:
 https://carlwebster.com/downloads/download-info/xenappxendesktop-7-8/
