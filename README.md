@@ -28,8 +28,8 @@ https://carlwebster.com/downloads/download-info/citrix-cloud-citrix-virtual-apps
 NOTE: The account used to run this script must have at least Read access to the SQL Server(s) that hold(s) the Citrix Site, Monitoring, and Logging databases.
 
 By default, only gives summary information for:
-	Administrators\
-	App-V Publishing\
+&emsp;Administrators\
+&emsp;App-V Publishing\
 	Application Groups\
 	Applications\
 	Controllers\
