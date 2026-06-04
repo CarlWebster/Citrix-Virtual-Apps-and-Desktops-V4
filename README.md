@@ -32,25 +32,25 @@ By default, only gives summary information for:
 	App-V Publishing\
 	Application Groups\
 	Applications\
-	Controllers
-	Delivery Groups
-	Hosting
-	Logging
-	Machine Catalogs
-	Policies
-	StoreFront
-	Zones
+	Controllers\
+	Delivery Groups\
+	Hosting\
+	Logging\
+	Machine Catalogs\
+	Policies\
+	StoreFront\
+	Zones\
 
 The Summary information is what is shown in the top half of Citrix Web Studio for:
-	Machine Catalogs
-	Delivery Groups
-	Applications
-	Policies
-	Logging
-	Controllers
-	Administrators
-	Hosting
-	StoreFront
+	Machine Catalogs\
+	Delivery Groups\
+	Applications\
+	Policies\
+	Logging\
+	Controllers\
+	Administrators\
+	Hosting\
+	StoreFront\
 
 Using the MachineCatalogs parameter can cause the report to take a very long time to complete and can generate an extremely long report.
 
@@ -63,16 +63,17 @@ Using BrokerRegistryKeys requires the script runs elevated.
 Creates an output file named after the CVAD Site.
 
 Word and PDF Document includes a Cover Page, Table of Contents and Footer.
+
 Includes support for the following language versions of Microsoft Word:
-	Catalan
-	Chinese
-	Danish
-	Dutch
-	English
-	Finnish
-	French
-	German
-	Norwegian
-	Portuguese
-	Spanish
-	Swedish
+	Catalan\
+	Chinese\
+	Danish\
+	Dutch\
+	English\
+	Finnish\
+	French\
+	German\
+	Norwegian\
+	Portuguese\
+	Spanish\
+	Swedish\
