@@ -39,7 +39,7 @@ By default, only gives summary information for:
 	Machine Catalogs\
 	Policies\
 	StoreFront\
-	Zones\
+	Zones
 
 The Summary information is what is shown in the top half of Citrix Web Studio for:
 	Machine Catalogs\
@@ -50,7 +50,7 @@ The Summary information is what is shown in the top half of Citrix Web Studio fo
 	Controllers\
 	Administrators\
 	Hosting\
-	StoreFront\
+	StoreFront
 
 Using the MachineCatalogs parameter can cause the report to take a very long time to complete and can generate an extremely long report.
 
@@ -76,4 +76,4 @@ Includes support for the following language versions of Microsoft Word:
 	Norwegian\
 	Portuguese\
 	Spanish\
-	Swedish\
+	Swedish
