@@ -41,16 +41,16 @@ By default, only gives summary information for:\
 &emsp;StoreFront\
 &emsp;Zones
 
-The Summary information is what is shown in the top half of Citrix Web Studio for:
-	Machine Catalogs\
-	Delivery Groups\
-	Applications\
-	Policies\
-	Logging\
-	Controllers\
-	Administrators\
-	Hosting\
-	StoreFront
+The Summary information is what is shown in the top half of Citrix Web Studio for:\
+&emsp;Machine Catalogs\
+&emsp;Delivery Groups\
+&emsp;Applications\
+&emsp;Policies\
+&emsp;Logging\
+&emsp;Controllers\
+&emsp;Administrators\
+&emsp;Hosting\
+&emsp;StoreFront
 
 Using the MachineCatalogs parameter can cause the report to take a very long time to complete and can generate an extremely long report.
 
@@ -64,16 +64,16 @@ Creates an output file named after the CVAD Site.
 
 Word and PDF Document includes a Cover Page, Table of Contents and Footer.
 
-Includes support for the following language versions of Microsoft Word:
-	Catalan\
-	Chinese\
-	Danish\
-	Dutch\
-	English\
-	Finnish\
-	French\
-	German\
-	Norwegian\
-	Portuguese\
-	Spanish\
-	Swedish
+Includes support for the following language versions of Microsoft Word:\
+&emsp;Catalan\
+&emsp;Chinese\
+&emsp;Danish\
+&emsp;Dutch\
+&emsp;English\
+&emsp;Finnish\
+&emsp;French\
+&emsp;German\
+&emsp;Norwegian\
+&emsp;Portuguese\
+&emsp;Spanish\
+&emsp;Swedish
