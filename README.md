@@ -17,13 +17,13 @@ If you are running XA/XD 7.0 through 7.7, please use:
 https://github.com/CarlWebster/Citrix-XenApp-XenDesktop-7-V1
 
 If you are running XA/XD 7.8 through CVAD 2006, please use:
-https://carlwebster.com/downloads/download-info/xenappxendesktop-7-8/
+https://github.com/CarlWebster/Citrix-XenApp-XenDesktop-7-V2
 
 If you are running CVAD 2006 through 2511, please use:
 https://github.com/CarlWebster/Citrix-Virtual-Apps-and-Desktops-V3
 
 If you are running Citrix Cloud, please use:
-https://carlwebster.com/downloads/download-info/citrix-cloud-citrix-virtual-apps-and-desktops-service/
+https://github.com/CarlWebster/Citrix-Cloud-Daas-
 
 NOTE: The account used to run this script must have at least Read access to the SQL Server(s) that hold(s) the Citrix Site, Monitoring, and Logging databases.
 
