@@ -41,7 +41,7 @@ By default, only gives summary information for:
 	StoreFront
 	Zones
 
-The Summary information is what is shown in the top half of Citrix Studio for:
+The Summary information is what is shown in the top half of Citrix Web Studio for:
 	Machine Catalogs
 	Delivery Groups
 	Applications
