@@ -1,0 +1,45 @@
+#webster@carlwebster.com
+#@carlwebster on Twitter
+#http://www.CarlWebster.com
+#Original script created on October 20, 2013
+#started updating for CVAD version 2603 on June 4, 2026
+
+# This script is based on the 3.44 script
+#
+#Version 4.00
+#	Thanks to Ferroque Systems	for lab access and help in gathering the necessary data for this update
+#
+#	Add support for CVAD 2603/7.47
+#
+#	Add a PDF copy of the ReadMe file so it could be displayed in Github
+#
+#	Change Dropbox links to Github links
+#
+#	Change script to run only for 2603 and later
+#
+#	In Function GetRolePermissions:
+#		Added new permissions
+#			EntitlementPolicyRule_ChangeTags	(Edit Desktop tag - Delivery Groups)
+#			Director_Endpoint					(View Endpoint page - Director)
+#			Machine_VdaAotTracing_Configuration	(Create, view, modify, and delete machine configurations for VDA Always on Tracing.- Other Permissions)
+#
+#	In Function OutputHosting, add new Connection Types:
+#		ConnectionType DisplayName                                      PluginFactoryName                         UsesCloudInfrastructure
+#		-------------- -----------                                      -----------------                         -----------------------
+#		        Custom Amulet Hotkey CoreStation™                       AmuletHotkeyCoreStationFactory                              False
+#		        Custom Oracle Compute Cloud@Customer                    OracleC3PluginFactory                                       False
+#
+#	In Function ProcessCitrixPolicies, add new policies
+#		ICA\Graphics\HDX graphics super resolution mode
+#		ICA\Graphics\Screenshot Redirected Content
+#		ICA\Keyboard and IME\End user control of language bar
+#		VDA Data Collection\uberAgent\Enhance Director with uberAgent data for application performance
+#
+#	In Function ProcessPolicies, 
+#		change: http://blogs.citrix.com/2013/07/15/merging-of-user-and-computer-policies-in-xendesktop-7-0/ (now a 404)
+#		to: https://support.citrix.com/external/article/CTX138509/merging-of-user-and-computer-policies-in.html
+#
+#	Updated the help text
+#
+#	Updated the ReadMe file
+#
