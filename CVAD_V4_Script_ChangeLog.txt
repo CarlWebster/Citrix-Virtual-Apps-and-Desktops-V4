@@ -7,7 +7,7 @@
 # This script is based on the 3.44 script
 #
 #Version 4.00
-#	Thanks to Ferroque Systems	for lab access and help in gathering the necessary data for this update
+#	Thanks to Ferroque Systems for lab access and help in gathering the necessary data for this update
 #
 #	Add support for CVAD 2603/7.47
 #
