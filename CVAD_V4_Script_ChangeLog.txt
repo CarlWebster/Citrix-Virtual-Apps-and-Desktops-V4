@@ -11,9 +11,9 @@
 #
 #	Add support for CVAD 2603/7.47
 #
-#	Add a PDF copy of the ReadMe file so it could be displayed in Github
+#	Add a PDF copy of the ReadMe file so it can be displayed in GitHub
 #
-#	Change Dropbox links to Github links
+#	Change Dropbox links to GitHub links
 #
 #	Change script to run only for 2603 and later
 #
@@ -38,6 +38,21 @@
 #	In Function ProcessPolicies, 
 #		change: http://blogs.citrix.com/2013/07/15/merging-of-user-and-computer-policies-in-xendesktop-7-0/ (now a 404)
 #		to: https://support.citrix.com/external/article/CTX138509/merging-of-user-and-computer-policies-in.html
+#
+#	In Functions OutputMachines
+#		OutputDeliveryGroup
+#		OutputDeliveryGroupDetails
+#		OutputDeliveryGroupCatalogs
+#		OutputApplicationSessions
+#		OutputHosting
+#			Replace all Get-BrokerMachine with Get-BrokerMachineV2 as Citrix recommended.
+#
+#			https://docs.citrix.com/en-us/citrix-virtual-apps-desktops/whats-new/removed-features
+#			Support for Get-BrokerMachine was deprecated in CVAD 2507. Citrix states to use Get-BrokerMachineV2
+#
+#			Item				Deprecation announced in version	Alternative
+#			---------------------------------------------------------------------------
+#			Get-BrokerMachine	2507								Get-BrokerMachineV2	
 #
 #	Updated the help text
 #
