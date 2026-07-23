@@ -6,8 +6,9 @@
 
 # This script is based on the 3.44 script
 #
-#Version 4.00
+#Version 4.00 23-Jul-2026
 #	Thanks to Ferroque Systems for lab access and help in gathering the necessary data for this update
+#	Thanks to Hal Lange for running a bunch of tests for me
 #
 #	Add support for CVAD 2603/7.47
 #
@@ -15,12 +16,12 @@
 #
 #	Change Dropbox links to GitHub links
 #
-#	Change script to run only for 2603 and later
+#	Change script to run only for 2511 and later
 #
 #	In Function GetRolePermissions:
 #		Added new permissions
 #			EntitlementPolicyRule_ChangeTags	(Edit Desktop tag - Delivery Groups)
-#			Director_Endpoint					(View Endpoint page - Director)
+#			Director_Endpoint			(View Endpoint page - Director)
 #			Machine_VdaAotTracing_Configuration	(Create, view, modify, and delete machine configurations for VDA Always on Tracing.- Other Permissions)
 #
 #	In Function OutputHosting, add new Connection Types:
@@ -46,13 +47,24 @@
 #		OutputApplicationSessions
 #		OutputHosting
 #			Replace all Get-BrokerMachine with Get-BrokerMachineV2 as Citrix recommended.
-#
 #			https://docs.citrix.com/en-us/citrix-virtual-apps-desktops/whats-new/removed-features
+#
 #			Support for Get-BrokerMachine was deprecated in CVAD 2507. Citrix states to use Get-BrokerMachineV2
 #
 #			Item				Deprecation announced in version	Alternative
-#			---------------------------------------------------------------------------
-#			Get-BrokerMachine	2507								Get-BrokerMachineV2	
+#			-------------------------------------------------------------------------------------------
+#			Get-BrokerMachine		2507					Get-BrokerMachineV2	
+#
+#	In Function OutputMachines, to match what is seen in Web Studio:
+#		Add Folder and Functional Level to machine catalog details
+#		Change provisioning type "Machine creation services" to "Machine creation services (MCS machine)"
+#		Change provisioning type "Provisioning Services" to "Citrix provisioning services"
+#		Change functional level text from "(or newer)" to "(or later)"
+#		If $Null -eq $Catalog.ProvisioningSchemeId, use "-" for the Provisioning Scheme ID
+#			Add Provisioning Scheme ID to all provisioning types
+#
+#	In Function ProcessScriptSetup, add testing for the new cmdlet Get-BrokerMachineV2
+#		If the cmdlet does not exist on the computer running the script, abort the script
 #
 #	Updated the help text
 #

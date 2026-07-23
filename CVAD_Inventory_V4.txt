@@ -5,9 +5,9 @@
 
 <#
 .SYNOPSIS
-	Creates an inventory of a Citrix Virtual Apps and Desktops 2603 or later Site.
+	Creates an inventory of a Citrix Virtual Apps and Desktops 2511 or later Site.
 .DESCRIPTION
-	Creates an inventory of a Citrix Virtual Apps and Desktops (CVAD) 2603 or later Site 
+	Creates an inventory of a Citrix Virtual Apps and Desktops (CVAD) 2511 or later Site 
 	using Microsoft PowerShell, Word, plain text, or HTML.
 	
 	This script requires at least PowerShell version 5.
@@ -19,7 +19,7 @@
 	
 	You can run this script remotely using the –AdminAddress (AA) parameter.
 	
-	This script supports CVAD versions starting with 2603.
+	This script supports CVAD versions starting with 2511.
 	
 	If you are running XA/XD 7.0 through 7.7, please use: 
 	https://github.com/CarlWebster/Citrix-XenApp-XenDesktop-7-V1
@@ -1056,9 +1056,9 @@
 	This script creates a Word, PDF, plain text, or HTML document.
 .NOTES
 	NAME: CVAD_Inventory_V4.ps1
-	VERSION: 4.00  Beta 2
+	VERSION: 4.00
 	AUTHOR: Carl Webster
-	LASTEDIT: June 8, 2026
+	LASTEDIT: July 23, 2026
 #>
 
 #endregion
@@ -1247,12 +1247,13 @@ Param(
 #@carlwebster on Twitter
 #http://www.CarlWebster.com
 #Original script created on October 20, 2013
-#started updating for CVAD version 2603 on June 4, 2026
+#started updating for CVAD version 2511 on June 4, 2026
 
 # This script is based on the 3.44 script
 #
-#Version 4.00
+#Version 4.00 23-Jul-2026
 #	Thanks to Ferroque Systems for lab access and help in gathering the necessary data for this update
+#	Thanks to Hal Lange for running a bunch of tests for me
 #
 #	Add support for CVAD 2603/7.47
 #
@@ -1260,7 +1261,7 @@ Param(
 #
 #	Change Dropbox links to GitHub links
 #
-#	Change script to run only for 2603 and later
+#	Change script to run only for 2511 and later
 #
 #	In Function GetRolePermissions:
 #		Added new permissions
@@ -1298,6 +1299,17 @@ Param(
 #			Item				Deprecation announced in version	Alternative
 #			---------------------------------------------------------------------------
 #			Get-BrokerMachine	2507								Get-BrokerMachineV2	
+#
+#	In Function OutputMachines, to match what is seen in Web Studio:
+#		Add Folder and Functional Level to machine catalog details
+#		Change provisioning type "Machine creation services" to "Machine creation services (MCS machine)"
+#		Change provisioning type "Provisioning Services" to "Citrix provisioning services"
+#		Change functional level text from "(or newer)" to "(or later)"
+#		If $Null -eq $Catalog.ProvisioningSchemeId, use "-" for the Provisioning Scheme ID
+#			Add Provisioning Scheme ID to all provisioning types
+#
+#	In Function ProcessScriptSetup, add testing for the new cmdlet Get-BrokerMachineV2
+#		If the cmdlet does not exist on the computer running the script, abort the script
 #
 #	Updated the help text
 #
@@ -1367,9 +1379,9 @@ $SaveEAPreference         = $ErrorActionPreference
 $ErrorActionPreference    = 'SilentlyContinue'
 
 #stuff for report footer
-$script:MyVersion   = "4.00 Beta 2"
+$script:MyVersion   = "4.00"
 $Script:ScriptName  = "CVAD_Inventory_V4.ps1"
-$tmpdate            = [datetime] "06/08/2026"
+$tmpdate            = [datetime] "07/23/2026"
 $Script:ReleaseDate = $tmpdate.ToUniversalTime().ToShortDateString()
 
 If($Null -eq $HTML)
@@ -6322,8 +6334,8 @@ Function OutputMachines
 		Switch ($Catalog.ProvisioningType)
 		{
 			"Manual" {$xProvisioningType = "Manual"; Break}
-			"PVS"    {$xProvisioningType = "Provisioning Services"; Break}
-			"MCS"    {$xProvisioningType = "Machine creation services"; Break}
+			"PVS"    {$xProvisioningType = "Citrix provisioning services"; Break}
+			"MCS"    {$xProvisioningType = "Machine creation services (MCS machine)"; Break}
 			Default  {$xProvisioningType = "Provisioning method could not be determined: $($Catalog.ProvisioningType)"; Break}
 		}
 
@@ -6465,18 +6477,27 @@ Function OutputMachines
 		Switch ($Catalog.MinimumFunctionalLevel)
 		{
 			"L5" 	{$xVDAVersion = "5.6 FP1 (Windows XP and Windows Vista)"; Break}
-			"L7"	{$xVDAVersion = "7.0 (or newer)"; Break}
-			"L7_6"	{$xVDAVersion = "7.6 (or newer)"; Break}
-			"L7_7"	{$xVDAVersion = "7.7 (or newer)"; Break}
-			"L7_8"	{$xVDAVersion = "7.8 (or newer)"; Break}
-			"L7_9"	{$xVDAVersion = "7.9 (or newer)"; Break}
-			"L7_20"	{$xVDAVersion = "1811 (or newer)"; Break}
-			"L7_25"	{$xVDAVersion = "2003 (or newer)"; Break}
-			"L7_30"	{$xVDAVersion = "2106 (or newer)"; Break}
-			"L7_34"	{$xVDAVersion = "2206 (or newer)"; Break}
+			"L7"	{$xVDAVersion = "7.0 (or later)"; Break}
+			"L7_6"	{$xVDAVersion = "7.6 (or later)"; Break}
+			"L7_7"	{$xVDAVersion = "7.7 (or later)"; Break}
+			"L7_8"	{$xVDAVersion = "7.8 (or later)"; Break}
+			"L7_9"	{$xVDAVersion = "7.9 (or later)"; Break}
+			"L7_20"	{$xVDAVersion = "1811 (or later)"; Break}
+			"L7_25"	{$xVDAVersion = "2003 (or later)"; Break}
+			"L7_30"	{$xVDAVersion = "2106 (or later)"; Break}
+			"L7_34"	{$xVDAVersion = "2206 (or later)"; Break}
 			Default {$xVDAVersion = "Unable to determine VDA version: $($Catalog.MinimumFunctionalLevel)"; Break}
 		}
 
+		If($Null -eq $Catalog.ProvisioningSchemeId) #added in V4.00
+		{
+			$xProvisioningSchemeId = "-"
+		}
+		Else
+		{
+			$xProvisioningSchemeId = $Catalog.ProvisioningSchemeId
+		}
+		
 		If($Catalog.ProvisioningType -eq "Manual" -and $Catalog.IsRemotePC -eq $True)
 		{
 			$RemotePCAccounts = Get-BrokerRemotePCAccount @CVADParams2 -CatalogUid $Catalog.Uid
@@ -6890,6 +6911,8 @@ Function OutputMachines
 				$CatalogInformation += @{Data = "Description"; Value = $Description; }
 				$CatalogInformation += @{Data = "Device Management Type"; Value = $DeviceManagementType; }
 				$CatalogInformation += @{Data = "Disk Image"; Value = $xDiskImage; }
+				$CatalogInformation += @{Data = "Folder"; Value = $FolderName; } #added in V4.00
+				$CatalogInformation += @{Data = "Functional Level"; Value = $xVDAVersion; } #added in V4.00
 				$CatalogInformation += @{Data = "Hard disk"; Value = $DiskSize; }
 				$CatalogInformation += @{Data = "Identity Pool Name"; Value = $IdentityPoolName; }
 				$CatalogInformation += @{Data = "Identity Type"; Value = $IdentityType; }
@@ -6905,6 +6928,7 @@ Function OutputMachines
 				$CatalogInformation += @{Data = "Prepared Image Definition Name"; Value = $PreparedImageDefinitionName; }
 				$CatalogInformation += @{Data = "Prepared Image Version Number"; Value = $PreparedImageVersionNumber; }
 				$CatalogInformation += @{Data = "Provisioning method"; Value = $xProvisioningType; }
+				$CatalogInformation += @{Data = "Provisioning Scheme ID"; Value = $xProvisioningSchemeId; } #added in V4.00
 				$CatalogInformation += @{Data = "Reset Administrator Passwords"; Value = $ResetAdministratorPasswords; }
 				$CatalogInformation += @{Data = "Resources"; Value = $HostingUnitName; }
 				$CatalogInformation += @{Data = "Set to VDA version"; Value = $xVDAVersion; }
@@ -6934,10 +6958,13 @@ Function OutputMachines
 			{
 				$CatalogInformation += @{Data = "Allocation type"; Value = $xAllocationType; }
 				$CatalogInformation += @{Data = "Description"; Value = $Description; }
+				$CatalogInformation += @{Data = "Folder"; Value = $FolderName; } #added in V4.00
+				$CatalogInformation += @{Data = "Functional Level"; Value = $xVDAVersion; } #added in V4.00
 				$CatalogInformation += @{Data = "Installed VDA version"; Value = $InstalledVDAVersion; }
 				$CatalogInformation += @{Data = "Machine type"; Value = $xCatalogType; }
 				$CatalogInformation += @{Data = "Operating System"; Value = $OperatingSystem; }
 				$CatalogInformation += @{Data = "Provisioning method"; Value = $xProvisioningType; }
+				$CatalogInformation += @{Data = "Provisioning Scheme ID"; Value = $xProvisioningSchemeId; } #added in V4.00
 				$CatalogInformation += @{Data = "PVS address"; Value = $Catalog.PvsAddress; }
 				$CatalogInformation += @{Data = "Set to VDA version"; Value = $xVDAVersion; }
 				$CatalogInformation += @{Data = "Zone"; Value = $Catalog.ZoneName; }
@@ -6947,6 +6974,8 @@ Function OutputMachines
 			{
 				$CatalogInformation += @{Data = "Allocated machines"; Value = $Catalog.UsedCount.ToString(); }
 				$CatalogInformation += @{Data = "Description"; Value = $Description; }
+				$CatalogInformation += @{Data = "Folder"; Value = $FolderName; } #added in V4.00
+				$CatalogInformation += @{Data = "Functional Level"; Value = $xVDAVersion; } #added in V4.00
 				$CatalogInformation += @{Data = "Installed VDA version"; Value = $InstalledVDAVersion; }
 				$CatalogInformation += @{Data = "Machine type"; Value = $xCatalogType; }
 				$CatalogInformation += @{Data = "No. of machines"; Value = $NumberOfMachines; }
@@ -7008,6 +7037,8 @@ Function OutputMachines
 					$CatalogInformation += @{Data = "     Allow subfolder matches"; Value = $RemotePCSubOU; }
 				}
 
+				$CatalogInformation += @{Data = "Provisioning method"; Value = $xProvisioningType; }
+				$CatalogInformation += @{Data = "Provisioning Scheme ID"; Value = $xProvisioningSchemeId; } #added in V4.00
 				$CatalogInformation += @{Data = "Set to VDA version"; Value = $xVDAVersion; }
 				$CatalogInformation += @{Data = "Zone"; Value = $Catalog.ZoneName; }
 				$CatalogInformation += @{Data = "Zone Healthy?"; Value = $Catalog.ZoneHealthy.ToString(); }
@@ -7018,11 +7049,14 @@ Function OutputMachines
 				$CatalogInformation += @{Data = "Allocated machines"; Value = $Catalog.UsedCount.ToString(); }
 				$CatalogInformation += @{Data = "Allocation type"; Value = $xAllocationType; }
 				$CatalogInformation += @{Data = "Description"; Value = $Description; }
+				$CatalogInformation += @{Data = "Folder"; Value = $FolderName; } #added in V4.00
+				$CatalogInformation += @{Data = "Functional Level"; Value = $xVDAVersion; } #added in V4.00
 				$CatalogInformation += @{Data = "Installed VDA version"; Value = $InstalledVDAVersion; }
 				$CatalogInformation += @{Data = "Machine type"; Value = $xCatalogType; }
 				$CatalogInformation += @{Data = "No. of machines"; Value = $NumberOfMachines; }
 				$CatalogInformation += @{Data = "Operating System"; Value = $OperatingSystem; }
 				$CatalogInformation += @{Data = "Provisioning method"; Value = $xProvisioningType; }
+				$CatalogInformation += @{Data = "Provisioning Scheme ID"; Value = $xProvisioningSchemeId; } #added in V4.00
 				$CatalogInformation += @{Data = "Set to VDA version"; Value = $xVDAVersion; }
 				$CatalogInformation += @{Data = "User data"; Value = $xPersistType; }
 				$CatalogInformation += @{Data = "Zone"; Value = $Catalog.ZoneName; }
@@ -7102,6 +7136,8 @@ Function OutputMachines
 				Line 1 "Description`t`t`t`t: " $Description
 				Line 1 "Device Management Type`t`t`t: " $DeviceManagementType
 				Line 1 "Disk Image`t`t`t`t: " $xDiskImage
+				Line 1 "Folder`t`t`t`t`t: " $FolderName #added in V4.00
+				Line 1 "Functional Level`t`t`t: " $xVDAVersion #added in V4.00
 				Line 1 "Hard disk`t`t`t`t: " $DiskSize
 				Line 1 "Identity Pool Name`t`t`t: " $IdentityPoolName
 				Line 1 "Identity Type`t`t`t`t: " $IdentityType 
@@ -7117,6 +7153,7 @@ Function OutputMachines
 				Line 1 "Prepared Image Definition Name`t`t: " $PreparedImageDefinitionName 
 				Line 1 "Prepared Image Version Number`t`t: " $PreparedImageVersionNumber 
 				Line 1 "Provisioning method`t`t`t: " $xProvisioningType
+				Line 1 "Provisioning Scheme ID`t`t`t: " $xProvisioningSchemeId #added in V4.00
 				Line 1 "Reset Administrator Passwords`t`t: " $ResetAdministratorPasswords
 				Line 1 "Resources`t`t`t`t: " $HostingUnitName
 				Line 1 "Set to VDA version`t`t`t: " $xVDAVersion
@@ -7146,10 +7183,13 @@ Function OutputMachines
 			{
 				Line 1 "Allocation type`t`t`t`t: " $xAllocationType
 				Line 1 "Description`t`t`t`t: " $Description
+				Line 1 "Folder`t`t`t`t`t: " $FolderName #added in V4.00
+				Line 1 "Functional Level`t`t`t: " $xVDAVersion #added in V4.00
 				Line 1 "Installed VDA version`t`t`t: " $InstalledVDAVersion
 				Line 1 "Machine type`t`t`t`t: " $xCatalogType
 				Line 1 "Operating System`t`t`t: " $OperatingSystem
 				Line 1 "Provisioning method`t`t`t: " $xProvisioningType
+				Line 1 "Provisioning Scheme ID`t`t`t: " $xProvisioningSchemeId #added in V4.00
 				Line 1 "PVS address`t`t`t`t: " $Catalog.PvsAddress
 				Line 1 "Set to VDA version`t`t`t: " $xVDAVersion
 				Line 1 "Zone`t`t`t`t`t: " $Catalog.ZoneName
@@ -7159,6 +7199,8 @@ Function OutputMachines
 			{
 				Line 1 "Allocated machines`t`t`t: " $Catalog.UsedCount.ToString()
 				Line 1 "Description`t`t`t`t: " $Description
+				Line 1 "Folder`t`t`t`t`t: " $FolderName #added in V4.00
+				Line 1 "Functional Level`t`t`t: " $xVDAVersion #added in V4.00
 				Line 1 "Installed VDA version`t`t`t: " $InstalledVDAVersion
 				Line 1 "Machine type`t`t`t`t: " $xCatalogType
 				Line 1 "No. of machines`t`t`t`t: " $NumberOfMachines
@@ -7221,6 +7263,8 @@ Function OutputMachines
 					Line 2 "Allow subfolder matches`t`t: " $RemotePCSubOU
 				}
 
+				Line 1 "Provisioning method`t`t`t: " $xProvisioningType
+				Line 1 "Provisioning Scheme ID`t`t`t: " $xProvisioningSchemeId #added in V4.00
 				Line 1 "Set to VDA version`t`t`t: " $xVDAVersion
 				Line 1 "Zone`t`t`t`t`t: " $Catalog.ZoneName
 				Line 1 "Zone Healthy?`t`t`t`t: " $Catalog.ZoneHealthy.ToString()
@@ -7230,11 +7274,14 @@ Function OutputMachines
 				Line 1 "Allocated machines`t`t`t: " $Catalog.UsedCount.ToString()
 				Line 1 "Allocation type`t`t`t`t: " $xAllocationType
 				Line 1 "Description`t`t`t`t: " $Description
+				Line 1 "Folder`t`t`t`t`t: " $FolderName #added in V4.00
+				Line 1 "Functional Level`t`t`t: " $xVDAVersion #added in V4.00
 				Line 1 "Installed VDA version`t`t`t: " $InstalledVDAVersion
 				Line 1 "Machine type`t`t`t`t: " $xCatalogType
 				Line 1 "No. of machines`t`t`t`t: " $NumberOfMachines
 				Line 1 "Operating System`t`t`t: " $OperatingSystem
 				Line 1 "Provisioning method`t`t`t: " $xProvisioningType
+				Line 1 "Provisioning Scheme ID`t`t`t: " $xProvisioningSchemeId #added in V4.00
 				Line 1 "Set to VDA version`t`t`t: " $xVDAVersion
 				Line 1 "User data`t`t`t`t: " $xPersistType
 				Line 1 "Zone`t`t`t`t`t: " $Catalog.ZoneName
@@ -7301,6 +7348,8 @@ Function OutputMachines
 				$rowdata += @(,("Description",($global:htmlsb),$Description,$htmlwhite)) 
 				$rowdata += @(,("Device Management Type",($global:htmlsb),$DeviceManagementType,$htmlwhite)) 
 				$rowdata += @(,('Disk Image',($global:htmlsb),$xDiskImage,$htmlwhite))
+				$rowdata += @(,("Folder",($global:htmlsb),$FolderName,$htmlwhite)) #added in V4.00
+				$rowdata += @(,("Functional Level",($global:htmlsb),$xVDAVersion,$htmlwhite)) #added in V4.00
 				$rowdata += @(,('Hard disk',($global:htmlsb),$DiskSize,$htmlwhite))
 				$rowdata += @(,("Identity Pool Name",($global:htmlsb),$IdentityPoolName,$htmlwhite))
 				$rowdata += @(,("Identity Type",($global:htmlsb),$IdentityType,$htmlwhite)) 
@@ -7316,6 +7365,7 @@ Function OutputMachines
 				$rowdata += @(,("Prepared Image Definition Name",($global:htmlsb),$PreparedImageDefinitionName,$htmlwhite)) 
 				$rowdata += @(,("Prepared Image Version Number",($global:htmlsb),$PreparedImageVersionNumber,$htmlwhite)) 
 				$rowdata += @(,('Provisioning method',($global:htmlsb),$xProvisioningType,$htmlwhite))
+				$rowdata += @(,("Provisioning Scheme ID",($global:htmlsb),$xProvisioningSchemeId,$htmlwhite)) #added in V4.00
 				$rowdata += @(,("Reset Administrator Passwords",($global:htmlsb),$ResetAdministratorPasswords,$htmlwhite))
 				$rowdata += @(,('Resources',($global:htmlsb),$HostingUnitName,$htmlwhite))
 				$rowdata += @(,('Set to VDA version',($global:htmlsb),$xVDAVersion,$htmlwhite))
@@ -7344,10 +7394,13 @@ Function OutputMachines
 			ElseIf($Catalog.ProvisioningType -eq "PVS")
 			{
 				$rowdata += @(,('Allocation type',($global:htmlsb),$xAllocationType,$htmlwhite))
+				$rowdata += @(,("Folder",($global:htmlsb),$FolderName,$htmlwhite)) #added in V4.00
+				$rowdata += @(,("Functional Level",($global:htmlsb),$xVDAVersion,$htmlwhite)) #added in V4.00
 				$rowdata += @(,('Installed VDA version',($global:htmlsb),$InstalledVDAVersion,$htmlwhite))
 				$rowdata += @(,('Machine Type',($global:htmlsb),$xCatalogType,$htmlwhite))
 				$rowdata += @(,('Operating System',($global:htmlsb),$OperatingSystem,$htmlwhite))
 				$rowdata += @(,('Provisioning method',($global:htmlsb),$xProvisioningType,$htmlwhite))
+				$rowdata += @(,("Provisioning Scheme ID",($global:htmlsb),$xProvisioningSchemeId,$htmlwhite)) #added in V4.00
 				$rowdata += @(,('PVS address',($global:htmlsb),$Catalog.PvsAddress,$htmlwhite))
 				$rowdata += @(,('Set to VDA version',($global:htmlsb),$xVDAVersion,$htmlwhite))
 				$rowdata += @(,('Zone',($global:htmlsb),$Catalog.ZoneName,$htmlwhite))
@@ -7356,6 +7409,8 @@ Function OutputMachines
 			ElseIf($Catalog.ProvisioningType -eq "Manual" -and $Catalog.IsRemotePC -eq $True)
 			{
 				$rowdata += @(,('Allocated machines',($global:htmlsb),$Catalog.UsedCount.ToString(),$htmlwhite))
+				$rowdata += @(,("Folder",($global:htmlsb),$FolderName,$htmlwhite)) #added in V4.00
+				$rowdata += @(,("Functional Level",($global:htmlsb),$xVDAVersion,$htmlwhite)) #added in V4.00
 				$rowdata += @(,('Installed VDA version',($global:htmlsb),$InstalledVDAVersion,$htmlwhite))
 				$rowdata += @(,('Machine Type',($global:htmlsb),$xCatalogType,$htmlwhite))
 				$rowdata += @(,('No. of machines',($global:htmlsb),$NumberOfMachines,$htmlwhite))
@@ -7416,6 +7471,8 @@ Function OutputMachines
 					$rowdata += @(,("Organizational Units",($global:htmlsb),$RemotePCOU,$htmlwhite))
 					$rowdata += @(,("     Allow subfolder matches",($global:htmlsb),$RemotePCSubOU,$htmlwhite))
 				}
+				$rowdata += @(,('Provisioning method',($global:htmlsb),$xProvisioningType,$htmlwhite))
+				$rowdata += @(,("Provisioning Scheme ID",($global:htmlsb),$xProvisioningSchemeId,$htmlwhite)) #added in V4.00
 				$rowdata += @(,('Set to VDA version',($global:htmlsb),$xVDAVersion,$htmlwhite))
 				$rowdata += @(,('Zone',($global:htmlsb),$Catalog.ZoneName,$htmlwhite))
 				$rowdata += @(,('Zone Healthy?',($global:htmlsb),$Catalog.ZoneHealthy.ToString(),$htmlwhite))
@@ -7424,11 +7481,14 @@ Function OutputMachines
 			{
 				$rowdata += @(,('Allocated machines',($global:htmlsb),$Catalog.UsedCount.ToString(),$htmlwhite))
 				$rowdata += @(,('Allocation type',($global:htmlsb),$xAllocationType,$htmlwhite))
+				$rowdata += @(,("Folder",($global:htmlsb),$FolderName,$htmlwhite)) #added in V4.00
+				$rowdata += @(,("Functional Level",($global:htmlsb),$xVDAVersion,$htmlwhite)) #added in V4.00
 				$rowdata += @(,('Installed VDA version',($global:htmlsb),$InstalledVDAVersion,$htmlwhite))
 				$rowdata += @(,('Machine Type',($global:htmlsb),$xCatalogType,$htmlwhite))
 				$rowdata += @(,('No. of machines',($global:htmlsb),$NumberOfMachines,$htmlwhite))
 				$rowdata += @(,('Operating System',($global:htmlsb),$OperatingSystem,$htmlwhite))
 				$rowdata += @(,('Provisioning method',($global:htmlsb),$xProvisioningType,$htmlwhite))
+				$rowdata += @(,("Provisioning Scheme ID",($global:htmlsb),$xProvisioningSchemeId,$htmlwhite)) #added in V4.00
 				$rowdata += @(,('User data',($global:htmlsb),$xPersistType,$htmlwhite))
 				$rowdata += @(,('Set to VDA version',($global:htmlsb),$xVDAVersion,$htmlwhite))
 				$rowdata += @(,('Zone',($global:htmlsb),$Catalog.ZoneName,$htmlwhite))
@@ -7724,15 +7784,15 @@ Function OutputMachines
 						{
 							"" 		{$tmp = "No Functional Level set"; Break}
 							"L5" 	{$tmp = "5.6 FP1 (Windows XP and Windows Vista)"; Break}
-							"L7"	{$tmp = "7.0 (or newer)"; Break}
-							"L7_6"	{$tmp = "7.6 (or newer)"; Break}
-							"L7_7"	{$tmp = "7.7 (or newer)"; Break}
-							"L7_8"	{$tmp = "7.8 (or newer)"; Break}
-							"L7_9"	{$tmp = "7.9 (or newer)"; Break}
-							"L7_20"	{$tmp = "1811 (or newer)"; Break}
-							"L7_25"	{$tmp = "2003 (or newer)"; Break}
-							"L7_30"	{$tmp = "2106 (or newer)"; Break}
-							"L7_34"	{$tmp = "2206 (or newer)"; Break}
+							"L7"	{$tmp = "7.0 (or later)"; Break}
+							"L7_6"	{$tmp = "7.6 (or later)"; Break}
+							"L7_7"	{$tmp = "7.7 (or later)"; Break}
+							"L7_8"	{$tmp = "7.8 (or later)"; Break}
+							"L7_9"	{$tmp = "7.9 (or later)"; Break}
+							"L7_20"	{$tmp = "1811 (or later)"; Break}
+							"L7_25"	{$tmp = "2003 (or later)"; Break}
+							"L7_30"	{$tmp = "2106 (or later)"; Break}
+							"L7_34"	{$tmp = "2206 (or later)"; Break}
 							Default {$tmp = "Unable to determine Image Functional Level: $($Image.FunctionalLevel)"; Break}
 						}
 
@@ -7937,111 +7997,108 @@ Function OutputMachines
 		}
 		
 		#is there a reboot schedule configured for this catalog
-		If($Script:CVADSiteVersion -ge "7.36")
+		#to prevent the "Get-BrokerCatalogRebootSchedule : Object does not exist" error
+		#get all the reboot schedules
+		
+		$CatalogRebootSchedules = Get-BrokerCatalogRebootSchedule @CVADParams1
+		
+		If($? -and $Null -ne $CatalogRebootSchedules)
 		{
-			#to prevent the "Get-BrokerCatalogRebootSchedule : Object does not exist" error
-			#get all the reboot schedules
-			
-			$CatalogRebootSchedules = Get-BrokerCatalogRebootSchedule @CVADParams1
-			
-			If($? -and $Null -ne $CatalogRebootSchedules)
+			#see if the $CatalogRebootSchedules object contains this catalog's Uid
+			If($CatalogRebootSchedules.CatalogUid -Contains $Catalog.Uid)
 			{
-				#see if the $CatalogRebootSchedules object contains this catalog's Uid
-				If($CatalogRebootSchedules.CatalogUid -Contains $Catalog.Uid)
-				{
-					$CatalogRebootSchedule = $CatalogRebootSchedules | Where-Object {$_.CatalogUid -eq $Catalog.Uid}
-					<#
-						Active                : False
-						CatalogName           : Win10 Random
-						CatalogUid            : 1
-						Description           :
-						Enabled               : True
-						MaxOvertimeStartMins  : 0
-						Name                  : Update reboot
-						RebootDuration        : 240 [minutes]
-						StartDate             : 2022-02-03
-						StartTime             : 01:00:00
-						Uid                   : 1
-						WarningDuration       : 10 [minutes]
-						WarningMessage        : Save your work
-						WarningRepeatInterval : 0 [minutes]
-						WarningTitle          : WARNING: Reboot pending
-					#>
-					
-					If($MSWord -or $PDF)
-					{
-						WriteWordLine 4 0 "Catalog Reboot Schedule"
-						[System.Collections.Hashtable[]] $CatalogInformation = @()
-						$CatalogInformation += @{Data = "Reboot schedule name"; Value = $CatalogRebootSchedule.Name; }
-						$CatalogInformation += @{Data = "Description"; Value = $CatalogRebootSchedule.Description; }
-						$CatalogInformation += @{Data = "Active"; Value = $CatalogRebootSchedule.Active.ToString(); }
-						$CatalogInformation += @{Data = "Enabled"; Value = $CatalogRebootSchedule.Enabled.ToString(); }
-						$CatalogInformation += @{Data = "Max Overtime Start Minutes"; Value = $CatalogRebootSchedule.MaxOvertimeStartMins.ToString(); }
-						$CatalogInformation += @{Data = "Reboot duration in Minutes"; Value = $CatalogRebootSchedule.RebootDuration.ToString(); }
-						$CatalogInformation += @{Data = "Start Date"; Value = $CatalogRebootSchedule.StartDate.ToString(); }
-						$CatalogInformation += @{Data = "Start Time"; Value = $CatalogRebootSchedule.StartTime.ToString(); }
-						$CatalogInformation += @{Data = "Warning Duration in Minutes"; Value = $CatalogRebootSchedule.WarningDuration.ToString(); }
-						$CatalogInformation += @{Data = "Warning Message"; Value = $CatalogRebootSchedule.WarningMessage; }
-						$CatalogInformation += @{Data = "Warning Repeat Interval in Minutes"; Value = $CatalogRebootSchedule.WarningRepeatInterval.ToString(); }
-						$CatalogInformation += @{Data = "Warning Title"; Value = $CatalogRebootSchedule.WarningTitle; }
+				$CatalogRebootSchedule = $CatalogRebootSchedules | Where-Object {$_.CatalogUid -eq $Catalog.Uid}
+				<#
+					Active                : False
+					CatalogName           : Win10 Random
+					CatalogUid            : 1
+					Description           :
+					Enabled               : True
+					MaxOvertimeStartMins  : 0
+					Name                  : Update reboot
+					RebootDuration        : 240 [minutes]
+					StartDate             : 2022-02-03
+					StartTime             : 01:00:00
+					Uid                   : 1
+					WarningDuration       : 10 [minutes]
+					WarningMessage        : Save your work
+					WarningRepeatInterval : 0 [minutes]
+					WarningTitle          : WARNING: Reboot pending
+				#>
 				
-						$Table = AddWordTable -Hashtable $CatalogInformation `
-						-Columns Data,Value `
-						-List `
-						-Format $wdTableGrid `
-						-AutoFit $wdAutoFitFixed;
+				If($MSWord -or $PDF)
+				{
+					WriteWordLine 4 0 "Catalog Reboot Schedule"
+					[System.Collections.Hashtable[]] $CatalogInformation = @()
+					$CatalogInformation += @{Data = "Reboot schedule name"; Value = $CatalogRebootSchedule.Name; }
+					$CatalogInformation += @{Data = "Description"; Value = $CatalogRebootSchedule.Description; }
+					$CatalogInformation += @{Data = "Active"; Value = $CatalogRebootSchedule.Active.ToString(); }
+					$CatalogInformation += @{Data = "Enabled"; Value = $CatalogRebootSchedule.Enabled.ToString(); }
+					$CatalogInformation += @{Data = "Max Overtime Start Minutes"; Value = $CatalogRebootSchedule.MaxOvertimeStartMins.ToString(); }
+					$CatalogInformation += @{Data = "Reboot duration in Minutes"; Value = $CatalogRebootSchedule.RebootDuration.ToString(); }
+					$CatalogInformation += @{Data = "Start Date"; Value = $CatalogRebootSchedule.StartDate.ToString(); }
+					$CatalogInformation += @{Data = "Start Time"; Value = $CatalogRebootSchedule.StartTime.ToString(); }
+					$CatalogInformation += @{Data = "Warning Duration in Minutes"; Value = $CatalogRebootSchedule.WarningDuration.ToString(); }
+					$CatalogInformation += @{Data = "Warning Message"; Value = $CatalogRebootSchedule.WarningMessage; }
+					$CatalogInformation += @{Data = "Warning Repeat Interval in Minutes"; Value = $CatalogRebootSchedule.WarningRepeatInterval.ToString(); }
+					$CatalogInformation += @{Data = "Warning Title"; Value = $CatalogRebootSchedule.WarningTitle; }
+			
+					$Table = AddWordTable -Hashtable $CatalogInformation `
+					-Columns Data,Value `
+					-List `
+					-Format $wdTableGrid `
+					-AutoFit $wdAutoFitFixed;
 
-						SetWordCellFormat -Collection $Table.Columns.Item(1).Cells -Bold -BackgroundColor $wdColorGray15;
+					SetWordCellFormat -Collection $Table.Columns.Item(1).Cells -Bold -BackgroundColor $wdColorGray15;
 
-						$Table.Columns.Item(1).Width = 225;
-						$Table.Columns.Item(2).Width = 275;
+					$Table.Columns.Item(1).Width = 225;
+					$Table.Columns.Item(2).Width = 275;
 
-						$Table.Rows.SetLeftIndent($Indent0TabStops,$wdAdjustProportional)
+					$Table.Rows.SetLeftIndent($Indent0TabStops,$wdAdjustProportional)
 
-						FindWordDocumentEnd
-						$Table = $Null
-						WriteWordLine 0 0 ""
-					}
-					If($Text)
-					{
-						Line 1 "Catalog Reboot Schedule"
-						Line 2 "Reboot schedule name`t`t`t: " $CatalogRebootSchedule.Name
-						Line 2 "Description`t`t`t`t: " $CatalogRebootSchedule.Description
-						Line 2 "Active`t`t`t`t`t: " $CatalogRebootSchedule.Active.ToString()
-						Line 2 "Enabled`t`t`t`t`t: " $CatalogRebootSchedule.Enabled.ToString()
-						Line 2 "Max Overtime Start Minutes`t`t: " $CatalogRebootSchedule.MaxOvertimeStartMins.ToString()
-						Line 2 "Reboot duration in Minutes`t`t: " $CatalogRebootSchedule.RebootDuration.ToString()
-						Line 2 "Start Date`t`t`t`t: " $CatalogRebootSchedule.StartDate.ToString()
-						Line 2 "Start Time`t`t`t`t: " $CatalogRebootSchedule.StartTime.ToString()
-						Line 2 "Warning Duration in Minutes`t`t: " $CatalogRebootSchedule.WarningDuration.ToString()
-						Line 2 "Warning Message`t`t`t`t: " $CatalogRebootSchedule.WarningMessage
-						Line 2 "Warning Repeat Interval in Minutes`t: " $CatalogRebootSchedule.WarningRepeatInterval.ToString()
-						Line 2 "Warning Title`t`t`t`t: " $CatalogRebootSchedule.WarningTitle
-						Line 0 ""
-					}
-					If($HTML)
-					{
-						WriteHTMLLine 4 0 "Catalog Reboot Schedule"
-						$rowdata = @()
-						$columnHeaders = @("Description",($global:htmlsb),$Catalog.Description,$htmlwhite)
-						$rowdata += @(,( "Reboot schedule name",($global:htmlsb), $CatalogRebootSchedule.Name,$htmlwhite))
-						$rowdata += @(,( "Description",($global:htmlsb), $CatalogRebootSchedule.Description,$htmlwhite))
-						$rowdata += @(,( "Active",($global:htmlsb), $CatalogRebootSchedule.Active.ToString(),$htmlwhite))
-						$rowdata += @(,( "Enabled",($global:htmlsb), $CatalogRebootSchedule.Enabled.ToString(),$htmlwhite))
-						$rowdata += @(,( "Max Overtime Start Minutes",($global:htmlsb), $CatalogRebootSchedule.MaxOvertimeStartMins.ToString(),$htmlwhite))
-						$rowdata += @(,( "Reboot duration in Minutes",($global:htmlsb), $CatalogRebootSchedule.RebootDuration.ToString(),$htmlwhite))
-						$rowdata += @(,( "Start Date",($global:htmlsb), $CatalogRebootSchedule.StartDate.ToString(),$htmlwhite))
-						$rowdata += @(,( "Start Time",($global:htmlsb), $CatalogRebootSchedule.StartTime.ToString(),$htmlwhite))
-						$rowdata += @(,( "Warning Duration in Minutes",($global:htmlsb), $CatalogRebootSchedule.WarningDuration.ToString(),$htmlwhite))
-						$rowdata += @(,( "Warning Message",($global:htmlsb), $CatalogRebootSchedule.WarningMessage,$htmlwhite))
-						$rowdata += @(,( "Warning Repeat Interval in Minutes",($global:htmlsb), $CatalogRebootSchedule.WarningRepeatInterval.ToString(),$htmlwhite))
-						$rowdata += @(,( "Warning Title",($global:htmlsb), $CatalogRebootSchedule.WarningTitle,$htmlwhite))
+					FindWordDocumentEnd
+					$Table = $Null
+					WriteWordLine 0 0 ""
+				}
+				If($Text)
+				{
+					Line 1 "Catalog Reboot Schedule"
+					Line 2 "Reboot schedule name`t`t`t: " $CatalogRebootSchedule.Name
+					Line 2 "Description`t`t`t`t: " $CatalogRebootSchedule.Description
+					Line 2 "Active`t`t`t`t`t: " $CatalogRebootSchedule.Active.ToString()
+					Line 2 "Enabled`t`t`t`t`t: " $CatalogRebootSchedule.Enabled.ToString()
+					Line 2 "Max Overtime Start Minutes`t`t: " $CatalogRebootSchedule.MaxOvertimeStartMins.ToString()
+					Line 2 "Reboot duration in Minutes`t`t: " $CatalogRebootSchedule.RebootDuration.ToString()
+					Line 2 "Start Date`t`t`t`t: " $CatalogRebootSchedule.StartDate.ToString()
+					Line 2 "Start Time`t`t`t`t: " $CatalogRebootSchedule.StartTime.ToString()
+					Line 2 "Warning Duration in Minutes`t`t: " $CatalogRebootSchedule.WarningDuration.ToString()
+					Line 2 "Warning Message`t`t`t`t: " $CatalogRebootSchedule.WarningMessage
+					Line 2 "Warning Repeat Interval in Minutes`t: " $CatalogRebootSchedule.WarningRepeatInterval.ToString()
+					Line 2 "Warning Title`t`t`t`t: " $CatalogRebootSchedule.WarningTitle
+					Line 0 ""
+				}
+				If($HTML)
+				{
+					WriteHTMLLine 4 0 "Catalog Reboot Schedule"
+					$rowdata = @()
+					$columnHeaders = @("Description",($global:htmlsb),$Catalog.Description,$htmlwhite)
+					$rowdata += @(,( "Reboot schedule name",($global:htmlsb), $CatalogRebootSchedule.Name,$htmlwhite))
+					$rowdata += @(,( "Description",($global:htmlsb), $CatalogRebootSchedule.Description,$htmlwhite))
+					$rowdata += @(,( "Active",($global:htmlsb), $CatalogRebootSchedule.Active.ToString(),$htmlwhite))
+					$rowdata += @(,( "Enabled",($global:htmlsb), $CatalogRebootSchedule.Enabled.ToString(),$htmlwhite))
+					$rowdata += @(,( "Max Overtime Start Minutes",($global:htmlsb), $CatalogRebootSchedule.MaxOvertimeStartMins.ToString(),$htmlwhite))
+					$rowdata += @(,( "Reboot duration in Minutes",($global:htmlsb), $CatalogRebootSchedule.RebootDuration.ToString(),$htmlwhite))
+					$rowdata += @(,( "Start Date",($global:htmlsb), $CatalogRebootSchedule.StartDate.ToString(),$htmlwhite))
+					$rowdata += @(,( "Start Time",($global:htmlsb), $CatalogRebootSchedule.StartTime.ToString(),$htmlwhite))
+					$rowdata += @(,( "Warning Duration in Minutes",($global:htmlsb), $CatalogRebootSchedule.WarningDuration.ToString(),$htmlwhite))
+					$rowdata += @(,( "Warning Message",($global:htmlsb), $CatalogRebootSchedule.WarningMessage,$htmlwhite))
+					$rowdata += @(,( "Warning Repeat Interval in Minutes",($global:htmlsb), $CatalogRebootSchedule.WarningRepeatInterval.ToString(),$htmlwhite))
+					$rowdata += @(,( "Warning Title",($global:htmlsb), $CatalogRebootSchedule.WarningTitle,$htmlwhite))
 
-						$msg = ""
-						$columnWidths = @("200","500")
-						FormatHTMLTable $msg -rowArray $rowdata -columnArray $columnHeaders -fixedWidth $columnWidths -tablewidth "700"
-						WriteHTMLLine 0 0 ""
-					}
+					$msg = ""
+					$columnWidths = @("200","500")
+					FormatHTMLTable $msg -rowArray $rowdata -columnArray $columnHeaders -fixedWidth $columnWidths -tablewidth "700"
+					WriteHTMLLine 0 0 ""
 				}
 			}
 		}
@@ -11098,15 +11155,15 @@ Function OutputDeliveryGroupDetails
 	Switch ($Group.MinimumFunctionalLevel)
 	{
 		"L5" 	{$xVDAVersion = "5.6 FP1 (Windows XP and Windows Vista)"; Break}
-		"L7"	{$xVDAVersion = "7.0 (or newer)"; Break}
-		"L7_6"	{$xVDAVersion = "7.6 (or newer)"; Break}
-		"L7_7"	{$xVDAVersion = "7.7 (or newer)"; Break}
-		"L7_8"	{$xVDAVersion = "7.8 (or newer)"; Break}
-		"L7_9"	{$xVDAVersion = "7.9 (or newer)"; Break}
-		"L7_20"	{$xVDAVersion = "1811 (or newer)"; Break}
-		"L7_25"	{$xVDAVersion = "2003 (or newer)"; Break}
-		"L7_30"	{$xVDAVersion = "2106 (or newer)"; Break}
-		"L7_34"	{$xVDAVersion = "2206 (or newer)"; Break}
+		"L7"	{$xVDAVersion = "7.0 (or later)"; Break}
+		"L7_6"	{$xVDAVersion = "7.6 (or later)"; Break}
+		"L7_7"	{$xVDAVersion = "7.7 (or later)"; Break}
+		"L7_8"	{$xVDAVersion = "7.8 (or later)"; Break}
+		"L7_9"	{$xVDAVersion = "7.9 (or later)"; Break}
+		"L7_20"	{$xVDAVersion = "1811 (or later)"; Break}
+		"L7_25"	{$xVDAVersion = "2003 (or later)"; Break}
+		"L7_30"	{$xVDAVersion = "2106 (or later)"; Break}
+		"L7_34"	{$xVDAVersion = "2206 (or later)"; Break}
 		Default {$xVDAVersion = "Unable to determine VDA version: $($Group.MinimumFunctionalLevel)"; Break}
 	}
 	
@@ -19058,28 +19115,25 @@ Function ProcessCitrixPolicies
 					}
 
 					Write-Verbose "$(Get-Date -Format G): `t`t`tICA\File Redirection"
-					If($Script:CVADSiteVersion -lt 7.37)
+					If((validStateProp $Setting AllowFileTransfer State ) -and ($Setting.AllowFileTransfer.State -ne "NotConfigured"))
 					{
-						If((validStateProp $Setting AllowFileTransfer State ) -and ($Setting.AllowFileTransfer.State -ne "NotConfigured"))
+						$txt = "ICA\File Redirection\Allow file transfer between desktop and client"
+						If($MSWord -or $PDF)
 						{
-							$txt = "ICA\File Redirection\Allow file transfer between desktop and client"
-							If($MSWord -or $PDF)
-							{
-								$SettingsWordTable += @{
-								Text = $txt;
-								Value = $Setting.AllowFileTransfer.State;
-								}
+							$SettingsWordTable += @{
+							Text = $txt;
+							Value = $Setting.AllowFileTransfer.State;
 							}
-							If($HTML)
-							{
-								$rowdata += @(,(
-								$txt,$htmlbold,
-								$Setting.AllowFileTransfer.State,$htmlwhite))
-							}
-							If($Text)
-							{
-								OutputPolicySetting $txt $Setting.AllowFileTransfer.State 
-							}
+						}
+						If($HTML)
+						{
+							$rowdata += @(,(
+							$txt,$htmlbold,
+							$Setting.AllowFileTransfer.State,$htmlwhite))
+						}
+						If($Text)
+						{
+							OutputPolicySetting $txt $Setting.AllowFileTransfer.State 
 						}
 					}
 					If((validStateProp $Setting AutoConnectDrives State ) -and ($Setting.AutoConnectDrives.State -ne "NotConfigured"))
@@ -19229,94 +19283,88 @@ Function ProcessCitrixPolicies
 							OutputPolicySetting $txt $Setting.ClientRemoveableDrives.State 
 						}
 					}
-					If($Script:CVADSiteVersion -lt 7.37)
+					If((validStateProp $Setting AllowFileDownload State ) -and ($Setting.AllowFileDownload.State -ne "NotConfigured"))
 					{
-						If((validStateProp $Setting AllowFileDownload State ) -and ($Setting.AllowFileDownload.State -ne "NotConfigured"))
+						$txt = "ICA\File Redirection\Download file from desktop"
+						If($MSWord -or $PDF)
 						{
-							$txt = "ICA\File Redirection\Download file from desktop"
-							If($MSWord -or $PDF)
-							{
-								$SettingsWordTable += @{
-								Text = $txt;
-								Value = $Setting.AllowFileDownload.State;
-								}
+							$SettingsWordTable += @{
+							Text = $txt;
+							Value = $Setting.AllowFileDownload.State;
 							}
-							If($HTML)
-							{
-								$rowdata += @(,(
-								$txt,$htmlbold,
-								$Setting.AllowFileDownload.State,$htmlwhite))
-							}
-							If($Text)
-							{
-								OutputPolicySetting $txt $Setting.AllowFileDownload.State 
-							}
+						}
+						If($HTML)
+						{
+							$rowdata += @(,(
+							$txt,$htmlbold,
+							$Setting.AllowFileDownload.State,$htmlwhite))
+						}
+						If($Text)
+						{
+							OutputPolicySetting $txt $Setting.AllowFileDownload.State 
 						}
 					}
-					If($Script:CVADSiteVersion -ge 7.37)
+					If((validStateProp $Setting AllowFileDownload State ) -and ($Setting.AllowFileDownload.State -ne "NotConfigured"))
 					{
-						If((validStateProp $Setting AllowFileDownload State ) -and ($Setting.AllowFileDownload.State -ne "NotConfigured"))
+						$txt = "ICA\File Redirection\Download file for Citrix Workspace app for Chrome OS/HTML5"
+						If($MSWord -or $PDF)
 						{
-							$txt = "ICA\File Redirection\Download file for Citrix Workspace app for Chrome OS/HTML5"
-							If($MSWord -or $PDF)
-							{
-								$SettingsWordTable += @{
-								Text = $txt;
-								Value = $Setting.AllowFileDownload.State;
-								}
-							}
-							If($HTML)
-							{
-								$rowdata += @(,(
-								$txt,$htmlbold,
-								$Setting.AllowFileDownload.State,$htmlwhite))
-							}
-							If($Text)
-							{
-								OutputPolicySetting $txt $Setting.AllowFileDownload.State 
+							$SettingsWordTable += @{
+							Text = $txt;
+							Value = $Setting.AllowFileDownload.State;
 							}
 						}
-						If((validStateProp $Setting AllowFileTransfer State ) -and ($Setting.AllowFileTransfer.State -ne "NotConfigured"))
+						If($HTML)
 						{
-							$txt = "ICA\File Redirection\File transfer for Citrix Workspace app for Chrome OS/HTML5"
-							If($MSWord -or $PDF)
-							{
-								$SettingsWordTable += @{
-								Text = $txt;
-								Value = $Setting.AllowFileTransfer.State;
-								}
-							}
-							If($HTML)
-							{
-								$rowdata += @(,(
-								$txt,$htmlbold,
-								$Setting.AllowFileTransfer.State,$htmlwhite))
-							}
-							If($Text)
-							{
-								OutputPolicySetting $txt $Setting.AllowFileTransfer.State 
+							$rowdata += @(,(
+							$txt,$htmlbold,
+							$Setting.AllowFileDownload.State,$htmlwhite))
+						}
+						If($Text)
+						{
+							OutputPolicySetting $txt $Setting.AllowFileDownload.State 
+						}
+					}
+					If((validStateProp $Setting AllowFileTransfer State ) -and ($Setting.AllowFileTransfer.State -ne "NotConfigured"))
+					{
+						$txt = "ICA\File Redirection\File transfer for Citrix Workspace app for Chrome OS/HTML5"
+						If($MSWord -or $PDF)
+						{
+							$SettingsWordTable += @{
+							Text = $txt;
+							Value = $Setting.AllowFileTransfer.State;
 							}
 						}
-						If((validStateProp $Setting AllowFileUpload State ) -and ($Setting.AllowFileUpload.State -ne "NotConfigured"))
+						If($HTML)
 						{
-							$txt = "ICA\File Redirection\Upload file for Citrix Workspace app for Chrome OS/HTML5"
-							If($MSWord -or $PDF)
-							{
-								$SettingsWordTable += @{
-								Text = $txt;
-								Value = $Setting.AllowFileUpload.State;
-								}
+							$rowdata += @(,(
+							$txt,$htmlbold,
+							$Setting.AllowFileTransfer.State,$htmlwhite))
+						}
+						If($Text)
+						{
+							OutputPolicySetting $txt $Setting.AllowFileTransfer.State 
+						}
+					}
+					If((validStateProp $Setting AllowFileUpload State ) -and ($Setting.AllowFileUpload.State -ne "NotConfigured"))
+					{
+						$txt = "ICA\File Redirection\Upload file for Citrix Workspace app for Chrome OS/HTML5"
+						If($MSWord -or $PDF)
+						{
+							$SettingsWordTable += @{
+							Text = $txt;
+							Value = $Setting.AllowFileUpload.State;
 							}
-							If($HTML)
-							{
-								$rowdata += @(,(
-								$txt,$htmlbold,
-								$Setting.AllowFileUpload.State,$htmlwhite))
-							}
-							If($Text)
-							{
-								OutputPolicySetting $txt $Setting.AllowFileUpload.State 
-							}
+						}
+						If($HTML)
+						{
+							$rowdata += @(,(
+							$txt,$htmlbold,
+							$Setting.AllowFileUpload.State,$htmlwhite))
+						}
+						If($Text)
+						{
+							OutputPolicySetting $txt $Setting.AllowFileUpload.State 
 						}
 					}
 					If((validStateProp $Setting HostToClientRedirection State ) -and ($Setting.HostToClientRedirection.State -ne "NotConfigured"))
@@ -32944,15 +32992,15 @@ Function OutputSiteSettings
 	Switch ($Script:CVADSite1.DefaultMinimumFunctionalLevel)
 	{
 		"L5" 	{$xVDAVersion = "5.6 FP1 (Windows XP and Windows Vista)"; Break}
-		"L7"	{$xVDAVersion = "7.0 (or newer)"; Break}
-		"L7_6"	{$xVDAVersion = "7.6 (or newer)"; Break}
-		"L7_7"	{$xVDAVersion = "7.7 (or newer)"; Break}
-		"L7_8"	{$xVDAVersion = "7.8 (or newer)"; Break}
-		"L7_9"	{$xVDAVersion = "7.9 (or newer)"; Break}
-		"L7_20"	{$xVDAVersion = "1811 (or newer)"; Break}
-		"L7_25"	{$xVDAVersion = "2003 (or newer)"; Break}
-		"L7_30"	{$xVDAVersion = "2106 (or newer)"; Break}
-		"L7_34"	{$xVDAVersion = "2206 (or newer)"; Break}
+		"L7"	{$xVDAVersion = "7.0 (or later)"; Break}
+		"L7_6"	{$xVDAVersion = "7.6 (or later)"; Break}
+		"L7_7"	{$xVDAVersion = "7.7 (or later)"; Break}
+		"L7_8"	{$xVDAVersion = "7.8 (or later)"; Break}
+		"L7_9"	{$xVDAVersion = "7.9 (or later)"; Break}
+		"L7_20"	{$xVDAVersion = "1811 (or later)"; Break}
+		"L7_25"	{$xVDAVersion = "2003 (or later)"; Break}
+		"L7_30"	{$xVDAVersion = "2106 (or later)"; Break}
+		"L7_34"	{$xVDAVersion = "2206 (or later)"; Break}
 		Default {$xVDAVersion = "Unable to determine VDA version: $($Script:CVADSite1.DefaultMinimumFunctionalLevel)"; Break}
 	}
 
@@ -40853,7 +40901,8 @@ Function ProcessScriptSetup
 	$script:startTime = Get-Date
 
 	Write-Verbose "$(Get-Date -Format G): Loading Citrix PSSnapins"
-	If(!(Check-NeededPSSnapins "Citrix.AdIdentity.Admin.V2",
+	If(!(Check-NeededPSSnapins `
+	"Citrix.AdIdentity.Admin.V2",
 	"Citrix.Analytics.Admin.V1",
 	"Citrix.AppLibrary.Admin.V1",
 	"Citrix.AppV.Admin.V1",
@@ -40862,11 +40911,16 @@ Function ProcessScriptSetup
 	"Citrix.Configuration.Admin.V2",
 	"Citrix.ConfigurationLogging.Admin.V1",
 	"Citrix.DelegatedAdmin.Admin.V1",
+	"Citrix.EnvTest.Admin.V1",
 	"Citrix.Host.Admin.V2",
 	"Citrix.Licensing.Admin.V1",
 	"Citrix.MachineCreation.Admin.V2",
 	"Citrix.Monitor.Admin.V1",
-	"Citrix.Storefront.Admin.V1"))
+	"Citrix.Orchestration.Admin.V1",
+	"Citrix.Storefront.Admin.V1",
+	"Citrix.Trust.Admin.V1",
+	"Citrix.UserProfileManager.Admin.V1",
+	"Citrix.VdaUpdateService.Admin.V1"))
 
 	{
 		#We're missing Citrix Snapins that we need
@@ -40940,15 +40994,15 @@ Function ProcessScriptSetup
 		"
 				AbortScript
 			}
-			ElseIf($CVADSiteVersion.Major -eq 7 -and $CVADSiteVersion.Minor -lt 47)
+			ElseIf($CVADSiteVersion.Major -eq 7 -and $CVADSiteVersion.Minor -lt 46)
 			{
-				#this is not a CVAD 2603 or later Site, script cannot proceed
+				#this is not a CVAD 2511 or later Site, script cannot proceed
 				Write-Host "You are running version $CVADSiteVersion ($CVADSiteVersionReal)" -ForegroundColor White
 				Write-Error "
 	`n`n
 	Missing Citrix PowerShell Snap-ins Detected, check the console above for more information. 
 	`n`n
-	This script is designed for CVAD 2603 and later and should not be run on $CVADSiteVersionReal.
+	This script is designed for CVAD 2511 and later and should not be run on $CVADSiteVersionReal.
 	`n`n
 	If you are running XA/XD 7.0 through 7.7, please use: 
 	https://github.com/CarlWebster/Citrix-XenApp-XenDesktop-7-V1
@@ -40967,6 +41021,36 @@ Function ProcessScriptSetup
 		"
 				AbortScript
 			}
+			Else
+			{
+				Write-Error "
+	`n`n
+	Missing Citrix PowerShell Snap-ins Detected, check the console above for more information. 
+	`n`n
+	This script is designed for CVAD 2511 and later and should not be run on any other version.
+	`n`n
+	If you are running XA/XD 7.0 through 7.7, please use: 
+	https://github.com/CarlWebster/Citrix-XenApp-XenDesktop-7-V1
+	`n`n
+	If you are running XA/XD 7.8 through CVAD 2006, please use:
+	https://github.com/CarlWebster/Citrix-XenApp-XenDesktop-7-V2
+	`n`n
+	If you are running CVAD 2006 through 2511, please use: 
+	https://github.com/CarlWebster/Citrix-Virtual-Apps-and-Desktops-V3
+	`n`n
+	If you are running Citrix Cloud, please use:
+	https://github.com/CarlWebster/Citrix-Cloud-Daas-
+	`n`n
+	If you are running the script remotely, did you install Studio or the PowerShell snapins on $($env:computername)?
+	`n`n
+	Please see the Prerequisites section in the ReadMe file:
+	https://github.com/CarlWebster/Citrix-Virtual-Apps-and-Desktops-V4/blob/main/CVAD_Inventory_V4_ReadMe.pdf
+	`n`n
+	Script will now close.
+	`n`n
+			"
+				AbortScript
+			}
 		}
 		Else
 		{
@@ -40974,7 +41058,7 @@ Function ProcessScriptSetup
 	`n`n
 	Missing Citrix PowerShell Snap-ins Detected, check the console above for more information. 
 	`n`n
-	This script is designed for CVAD 2603 and later and should not be run on any other version.
+	This script is designed for CVAD 2511 and later and should not be run on any other version.
 	`n`n
 	If you are running XA/XD 7.0 through 7.7, please use: 
 	https://github.com/CarlWebster/Citrix-XenApp-XenDesktop-7-V1
@@ -40998,6 +41082,33 @@ Function ProcessScriptSetup
 		"
 			Exit
 		}
+	}
+	
+	#we have the snap-ins
+	#add a check for the Get-BrokerMachineV2 cmdlet, which is new starting in 2511
+	#the cmdlet doesn't exist in prior versions of Citrix.Broker.Admin.V2
+	Write-Verbose "$(Get-Date -Format G): Testing to see if the Get-BrokerMachineV2 cmdlet exists on this computer"
+	$Result = (Get-Command -Name Get-BrokerMachineV2 -EA 0)
+	
+	If($? -and $Null -ne $Result)
+	{
+		#good
+	}
+	Else
+	{	
+		#bad, the cmdlet doesn't exist
+		Write-Host "" -ForegroundColor White
+		Write-Host "The Get-BrokerMachineV2 cmdlet does not exist on this computer" -ForegroundColor White
+		Write-Error "
+	`n`n
+	Please see the Prerequisites section in the ReadMe file:
+	https://github.com/CarlWebster/Citrix-Virtual-Apps-and-Desktops-V4/blob/main/CVAD_Inventory_V4_ReadMe.pdf
+	`n`n
+	Script cannot continue.
+	Script will now close.
+	`n`n
+		"
+		AbortScript
 	}
 
 	$Script:DoPolicies = $False
@@ -41182,11 +41293,11 @@ Script cannot continue
 	}
 	ElseIf($Script:CVADSite2.ProductCode -eq "CVADS")
 	{
-		#this is not a CVAD 2603 or later Site, script cannot proceed
+		#this is not a CVAD 2511 or later Site, script cannot proceed
 		Write-Host "You are running on Citrix Cloud" -ForegroundColor White
 		Write-Error "
 	`n`n
-	This script is designed for On-Premises CVAD 2603 and later and should not be run on Citrix Cloud. Please use:
+	This script is designed for On-Premises CVAD 2511 and later and should not be run on Citrix Cloud. Please use:
 	`n`n
 	https://github.com/CarlWebster/Citrix-Cloud-Daas-
 	`n`n
@@ -41195,13 +41306,13 @@ Script cannot continue
 		"
 		AbortScript
 	}
-	ElseIf($Script:CVADSiteVersion.Major -eq 7 -and $Script:CVADSiteVersion.Minor -lt 47)
+	ElseIf($Script:CVADSiteVersion.Major -eq 7 -and $Script:CVADSiteVersion.Minor -lt 46)
 	{
-		#this is not a CVAD 2603 or later Site, script cannot proceed
+		#this is not a CVAD 2511 or later Site, script cannot proceed
 		Write-Host "You are running version $Script:CVADSiteVersion ($Script:CVADSiteVersionReal)" -ForegroundColor White
 		Write-Error "
 	`n`n
-	This script is designed for CVAD 2603 and later and should not be run on $Script:CVADSiteVersionReal.
+	This script is designed for CVAD 2511 and later and should not be run on $Script:CVADSiteVersionReal.
 	`n`n
 	If you are running XA/XD 7.0 through 7.7, please use: 
 	https://github.com/CarlWebster/Citrix-XenApp-XenDesktop-7-V1
