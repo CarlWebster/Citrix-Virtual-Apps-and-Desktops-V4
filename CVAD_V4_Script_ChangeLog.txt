@@ -6,6 +6,35 @@
 
 # This script is based on the 3.44 script
 #
+#Version 4.10
+#	Thanks to Ferroque Systems for lab access and help in gathering the necessary data for this update
+#
+#	Add support for CVAD 2607/7.48
+#
+#	In Function GetComputerWMIInfo,
+#		Fixed bug where if run on a localhost that is also the Citrix DB and/or license server,
+#		the call to Get-CimInstance failed with the FQDN of the localhost
+#
+#	In Function GetRolePermissions:
+#		Added new permissions
+#			ExtendedTracingAOT_Manage	(Manage Always on Tracing Capture Sessions - Other permissions)
+#			ExtendedTracingAOT_Read		(View Always on Tracing Capture Session - Other permissions)
+#
+#	In Functions OutputMachineDetails and OutputServerOSMachine,
+#		Fixed bugs to prevent an empty machine name and from processing a SID
+#
+#	In Function ProcessCitrixPolicies, add new policies
+#		AssistantApp\Enable Assistant App Notification Dialog
+#		ICA\Clipboard sharing scope
+#		ICA\MTU Rediscovery
+#		ICA\Authentication\Allow web sign-in
+#		ICA\Authentication\Microsoft Entra single sign-on
+#		Profile Management\Profile container settings\Enable BindLink redirection
+#
+#	Updated the help text
+#
+#	Updated the ReadMe file
+
 #Version 4.00 23-Jul-2026
 #	Thanks to Ferroque Systems for lab access and help in gathering the necessary data for this update
 #	Thanks to Hal Lange for running a bunch of tests for me

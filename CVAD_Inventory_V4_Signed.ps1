@@ -1056,9 +1056,9 @@
 	This script creates a Word, PDF, plain text, or HTML document.
 .NOTES
 	NAME: CVAD_Inventory_V4.ps1
-	VERSION: 4.00
+	VERSION: 4.10 Beta 1
 	AUTHOR: Carl Webster
-	LASTEDIT: July 23, 2026
+	LASTEDIT: September 22, 2026
 #>
 
 #endregion
@@ -1251,6 +1251,35 @@ Param(
 
 # This script is based on the 3.44 script
 #
+#Version 4.10
+#	Thanks to Ferroque Systems for lab access and help in gathering the necessary data for this update
+#
+#	Add support for CVAD 2607/7.48
+#
+#	In Function GetComputerWMIInfo,
+#		Fixed bug where if run on a localhost that is also the Citrix DB and/or license server,
+#		the call to Get-CimInstance failed with the FQDN of the localhost
+#
+#	In Function GetRolePermissions:
+#		Added new permissions
+#			ExtendedTracingAOT_Manage	(Manage Always on Tracing Capture Sessions - Other permissions)
+#			ExtendedTracingAOT_Read		(View Always on Tracing Capture Session - Other permissions)
+#
+#	In Functions OutputMachineDetails and OutputServerOSMachine,
+#		Fixed bugs to prevent an empty machine name and from processing a SID
+#
+#	In Function ProcessCitrixPolicies, add new policies
+#		AssistantApp\Enable Assistant App Notification Dialog
+#		ICA\Clipboard sharing scope
+#		ICA\MTU Rediscovery
+#		ICA\Authentication\Allow web sign-in
+#		ICA\Authentication\Microsoft Entra single sign-on
+#		Profile Management\Profile container settings\Enable BindLink redirection
+#
+#	Updated the help text
+#
+#	Updated the ReadMe file
+#
 #Version 4.00 23-Jul-2026
 #	Thanks to Ferroque Systems for lab access and help in gathering the necessary data for this update
 #	Thanks to Hal Lange for running a bunch of tests for me
@@ -1379,9 +1408,9 @@ $SaveEAPreference         = $ErrorActionPreference
 $ErrorActionPreference    = 'SilentlyContinue'
 
 #stuff for report footer
-$script:MyVersion   = "4.00"
+$script:MyVersion   = "4.10 Beta 1"
 $Script:ScriptName  = "CVAD_Inventory_V4.ps1"
-$tmpdate            = [datetime] "07/23/2026"
+$tmpdate            = [datetime] "09/22/2026"
 $Script:ReleaseDate = $tmpdate.ToUniversalTime().ToShortDateString()
 
 If($Null -eq $HTML)
@@ -1892,6 +1921,8 @@ Function GetComputerWMIInfo
 	# modified 17-Aug-2016 to fix a few issues with Text and HTML output
 	# modified 29-Apr-2018 to change from Arrays to New-Object System.Collections.ArrayList
 	# modified 11-Mar-2022 changed from using Get-WmiObject to Get-CimInstance
+	# modified 22-Sep-2026 fixed bug where if run on a localhost that is also the Citrix DB and/or license server,
+	#	the call to Get-CimInstance failed with the FQDN of the localhost
 
 	#Get Computer info
 	Write-Verbose "$(Get-Date -Format G): `t`tProcessing WMI Computer information"
@@ -1914,7 +1945,7 @@ Function GetComputerWMIInfo
 	
 	Try
 	{
-		If($RemoteComputerName -eq $env:computername)
+		If($RemoteComputerName -like "*$env:computername*")
 		{
 			$Results = Get-CimInstance -ClassName win32_computersystem -Verbose:$False
 		}
@@ -1935,7 +1966,7 @@ Function GetComputerWMIInfo
 		@{N="TotalPhysicalRam"; E={[math]::round(($_.TotalPhysicalMemory / 1GB),0)}}, `
 		NumberOfProcessors, NumberOfLogicalProcessors
 		$Results = $Null
-		If($RemoteComputerName -eq $env:computername)
+		If($RemoteComputerName -like "*$env:computername*")
 		{
 			[string]$ComputerOS = (Get-CimInstance -ClassName Win32_OperatingSystem -EA 0 -Verbose:$False).Caption
 		}
@@ -2002,7 +2033,7 @@ Function GetComputerWMIInfo
 
 	Try
 	{
-		If($RemoteComputerName -eq $env:computername)
+		If($RemoteComputerName -like "*$env:computername*")
 		{
 			$Results = Get-CimInstance -ClassName Win32_LogicalDisk -Verbose:$False
 		}
@@ -2083,7 +2114,7 @@ Function GetComputerWMIInfo
 
 	Try
 	{
-		If($RemoteComputerName -eq $env:computername)
+		If($RemoteComputerName -like "*$env:computername*")
 		{
 			$Results = Get-CimInstance -ClassName win32_Processor -Verbose:$False
 		}
@@ -2162,7 +2193,7 @@ Function GetComputerWMIInfo
 	
 	Try
 	{
-		If($RemoteComputerName -eq $env:computername)
+		If($RemoteComputerName -like "*$env:computername*")
 		{
 			$Results = Get-CimInstance -ClassName win32_networkadapterconfiguration -Verbose:$False
 		}
@@ -2197,7 +2228,7 @@ Function GetComputerWMIInfo
 			{
 				Try
 				{
-					If($RemoteComputerName -eq $env:computername)
+					If($RemoteComputerName -like "*$env:computername*")
 					{
 						$ThisNic = Get-CimInstance -ClassName win32_networkadapter -Verbose:$False | Where-Object {$_.index -eq $nic.index}
 					}
@@ -2312,7 +2343,7 @@ Function OutputComputerItem
 	try 
 	{
 
-		If($RemoteComputerName -eq $env:computername)
+		If($RemoteComputerName -like "*$env:computername*")
 		{
 			$PowerPlan = (Get-CimInstance -ClassName Win32_PowerPlan -Namespace "root\cimv2\power" -Verbose:$False |
 				Where-Object {$_.IsActive -eq $true} |
@@ -2652,7 +2683,7 @@ Function OutputNicItem
 {
 	Param([object]$Nic, [object]$ThisNic, [string]$RemoteComputerName)
 	
-	If($RemoteComputerName -eq $env:computername)
+	If($RemoteComputerName -like "*$env:computername*")
 	{
 		$powerMgmt = Get-CimInstance -ClassName MSPower_DeviceEnable -Namespace "root\wmi" -Verbose:$False |
 			Where-Object{$_.InstanceName -match [regex]::Escape($ThisNic.PNPDeviceID)}
@@ -2707,7 +2738,7 @@ Function OutputNicItem
 	Try
 	{
 		#https://ios.developreference.com/article/10085450/How+do+I+enable+VRSS+(Virtual+Receive+Side+Scaling)+for+a+Windows+VM+without+relying+on+Enable-NetAdapterRSS%3F
-		If($RemoteComputerName -eq $env:computername)
+		If($RemoteComputerName -like "*$env:computername*")
 		{
 			$RSSEnabled = (Get-CimInstance -ClassName MSFT_NetAdapterRssSettingData -Namespace "root\StandardCimV2" -ea 0 -Verbose:$False).Enabled
 		}
@@ -8459,6 +8490,23 @@ Function OutputMachineDetails
 	$tmp = $Machine.DNSName.Split(".")
 	$xMachineName = $tmp[0]
 	$tmp = $Null
+
+	#don't use the MachineName property as it is a SID
+	If($Machine.DNSName)	# is there anything in the DNSName property
+	{
+		$tmp = $Machine.DNSName.Split(".")
+		$xMachineName = $tmp[0]
+		$tmp = $Null
+	}
+	ElseIf($Machine.HostedMachineName)	# is there anything in the HostedMachineName property
+	{
+		$xMachineName = $Machine.HostedMachineName
+	}
+	Else	# error, there is no name for the Machine
+	{
+		$xMachineName = "error, there was no name found for the Machine"
+	}
+
 	Write-Verbose "$(Get-Date -Format G): `t`tOutput Machine $xMachineName"
 	
 	#first see if VDA is Linux
@@ -16676,6 +16724,31 @@ Function ProcessCitrixPolicies
 						}
 					}
 
+					#new section in 2607
+					Write-Verbose "$(Get-Date -Format G): `t`t`tAssistantApp"
+					If((validStateProp $Setting EnableAssistantAppNotificationDialog State ) -and ($Setting.EnableAssistantAppNotificationDialog.State -ne "NotConfigured"))
+					{
+						$txt = "AssistantApp\Enable Assistant App Notification Dialog"
+						If($MSWord -or $PDF)
+						{
+							$SettingsWordTable += @{
+							Text = $txt;
+							Value = $Setting.EnableAssistantAppNotificationDialogt.State;
+							}
+						}
+						If($HTML)
+						{
+							$rowdata += @(,(
+							$txt,$htmlbold,
+							$Setting.EnableAssistantAppNotificationDialog.State,$htmlwhite))
+						}
+						If($Text)
+						{
+							OutputPolicySetting $txt $Setting.EnableAssistantAppNotificationDialog.State
+						}
+					}
+					#end new section
+					
 					Write-Verbose "$(Get-Date -Format G): `t`t`tICA"
 					If((validStateProp $Setting ApplicationLaunchWaitTimeout State ) -and ($Setting.ApplicationLaunchWaitTimeout.State -ne "NotConfigured"))
 					{
@@ -16813,6 +16886,39 @@ Function ProcessCitrixPolicies
 							"UpdateToClientDenied"	{$tmp = "Host selection changes are not updated to client"; Break}
 							"UpdateToHostDenied"	{$tmp = "Client selection changes are not updated to host"; Break}
 							Default					{$tmp = "Clipboard selection update mode: $($Setting.ClipboardSelectionUpdateMode.Value)"; Break}
+						}
+						
+						If($MSWord -or $PDF)
+						{
+							$SettingsWordTable += @{
+							Text = $txt;
+							Value = $tmp;
+							}
+						}
+						If($HTML)
+						{
+							$rowdata += @(,(
+							$txt,$htmlbold,
+							$tmp,$htmlwhite))
+						}
+						If($Text)
+						{
+							OutputPolicySetting $txt $tmp 
+						}
+						$tmp = $Null
+					}
+					If((validStateProp $Setting ClipboardSharingScope State ) -and ($Setting.ClipboardSharingScope.State -ne "NotConfigured"))
+					{
+						#new in 2607
+						$txt = "ICA\Clipboard sharing scope"
+						$tmp = ""
+						Switch ($Setting.ClipboardSharingScope.Value)
+						{
+							"Unlimited"	{$tmp = "Unlimited (default)"; Break}
+							"VDA"		{$tmp = "VDA"; Break}
+							"CEP"		{$tmp = "CEP"; Break}
+							"VDACEP"	{$tmp = "VDA and CEP"; Break}
+							Default		{$tmp = "Clipboard sharing scope: $($Setting.ClipboardSharingScope.Value)"; Break}
 						}
 						
 						If($MSWord -or $PDF)
@@ -17304,6 +17410,29 @@ Function ProcessCitrixPolicies
 						If($Text)
 						{
 							OutputPolicySetting $txt $Setting.AllowScannerMacImageCaptureRedirection.State 
+						}
+					}
+					If((validStateProp $Setting MtuRediscovery State ) -and ($Setting.MtuRediscovery.State -ne "NotConfigured"))
+					{
+						#new in 2607
+						
+						$txt = "ICA\MTU Rediscovery"
+						If($MSWord -or $PDF)
+						{
+							$SettingsWordTable += @{
+							Text = $txt;
+							Value = $Setting.MtuRediscovery.Value;
+							}
+						}
+						If($HTML)
+						{
+							$rowdata += @(,(
+							$txt,$htmlbold,
+							$Setting.MtuRediscovery.Value,$htmlwhite))
+						}
+						If($Text)
+						{
+							OutputPolicySetting $txt $Setting.MtuRediscovery.Value 
 						}
 					}
 					If((validStateProp $Setting PrimarySelectionUpdateMode State ) -and ($Setting.PrimarySelectionUpdateMode.State -ne "NotConfigured"))
@@ -18156,6 +18285,52 @@ Function ProcessCitrixPolicies
 							OutputPolicySetting $txt $Setting.LossTolerantAudio.State 
 						}
 					}
+
+					#new section in 2607
+					Write-Verbose "$(Get-Date -Format G): `t`t`tICA\Authentication"
+					If((validStateProp $Setting AllowWebSignIn State ) -and ($Setting.AllowWebSignIn.State -ne "NotConfigured"))
+					{
+						$txt = "ICA\Authentication\Allow web sign-in"
+						If($MSWord -or $PDF)
+						{
+							$SettingsWordTable += @{
+							Text = $txt;
+							Value = $Setting.AllowWebSignIn.State;
+							}
+						}
+						If($HTML)
+						{
+							$rowdata += @(,(
+							$txt,$htmlbold,
+							$Setting.AllowWebSignIn.State,$htmlwhite))
+						}
+						If($Text)
+						{
+							OutputPolicySetting $txt $Setting.AllowWebSignIn.State 
+						}
+					}
+					If((validStateProp $Setting MicrosoftEntraSSOn State ) -and ($Setting.MicrosoftEntraSSOn.State -ne "NotConfigured"))
+					{
+						$txt = "ICA\Authentication\Microsoft Entra single sign-on"
+						If($MSWord -or $PDF)
+						{
+							$SettingsWordTable += @{
+							Text = $txt;
+							Value = $Setting.MicrosoftEntraSSOn.State;
+							}
+						}
+						If($HTML)
+						{
+							$rowdata += @(,(
+							$txt,$htmlbold,
+							$Setting.MicrosoftEntraSSOn.State,$htmlwhite))
+						}
+						If($Text)
+						{
+							OutputPolicySetting $txt $Setting.MicrosoftEntraSSOn.State 
+						}
+					}
+					#end new section
 
 					Write-Verbose "$(Get-Date -Format G): `t`t`tICA\Auto Client Reconnect"
 					If((validStateProp $Setting AutoClientReconnect State ) -and ($Setting.AutoClientReconnect.State -ne "NotConfigured"))
@@ -29092,6 +29267,28 @@ Function ProcessCitrixPolicies
 					}
 
 					Write-Verbose "$(Get-Date -Format G): `t`t`tProfile Management\Profile container settings"
+					If((validStateProp $Setting EnableBindLink State ) -and ($Setting.EnableBindLink.State -ne "NotConfigured"))
+					{
+						#new in 2607
+						$txt = "Profile Management\Profile container settings\Enable BindLink redirection"
+						If($MSWord -or $PDF)
+						{
+							$SettingsWordTable += @{
+							Text = $txt;
+							Value = $Setting.EnableBindLink.State;
+							}
+						}
+						If($HTML)
+						{
+							$rowdata += @(,(
+							$txt,$htmlbold,
+							$Setting.EnableBindLink.State,$htmlwhite))
+						}
+						If($Text)
+						{
+							OutputPolicySetting $txt $Setting.EnableBindLink.State
+						}
+					}
 					If((validStateProp $Setting DisableConcurrentAccessToOneDriveContainer State ) -and ($Setting.DisableConcurrentAccessToOneDriveContainer.State -ne "NotConfigured"))
 					{
 						$txt = "Profile Management\Profile container settings\Enable exclusive access to VHD containers - OneDrive container"
@@ -36747,6 +36944,8 @@ Function GetRolePermissions
 			"EnvTest"													{$Results.Add("Run environment tests", "Other permissions")}
 			"ExtendedTracing_Manage"									{$Results.Add("Manage Trace Capture Sessions", "Other permissions")} 
 			"ExtendedTracing_Read"										{$Results.Add("View Trace Capture Sessions", "Other permissions")} 
+			"ExtendedTracingAOT_Manage"									{$Results.Add("Manage Always on Tracing Capture Sessions", "Other permissions")} #new in 2607 
+			"ExtendedTracingAOT_Read"									{$Results.Add("View Always on Tracing Capture Sessions", "Other permissions")} #new in 2607
 			"Global_Read"												{$Results.Add("Read Site Configuration (Global_Read)", "Other permissions")}
 			"Global_Write"												{$Results.Add("Update Site Configuration (Global_Write)", "Other permissions")}
 			"Machine_VdaAotTracing_Configuration"						{$Results.Add("Create, view, modify, and delete machine configurations for VDA Always on Tracing.", "Other permissions")}  #new in 2603
@@ -38801,14 +39000,18 @@ Function OutputDesktopOSMachine
 {
 	Param([object]$Desktop)
 
+	# Regex pattern for a valid Windows SID
+	$SidPattern = "^S-\d-\d+(-\d+)*$"
+
 	If($Desktop.DNSName)	# is there anything in the DNSName property
 	{
 		$tmp = $Desktop.DNSName.Split(".")
 		$xDesktopName = $tmp[0]
 		$tmp = $Null
 	}
-	ElseIf($Desktop.MachineName)	# is there anything in the MachineName property
+	ElseIf($Desktop.MachineName -and $Desktop.MachineName -notmatch $SidPatter)	
 	{
+		# is there anything in the MachineName property and it is not a SID
 		$tmp = $Desktop.MachineName.Split("\")
 		$xDesktopName = $tmp[1]
 		$tmp = $Null
@@ -38970,15 +39173,19 @@ Function OutputDesktopOSMachine
 Function OutputServerOSMachine 
 {
 	Param([object]$Server)
-	
+
+	# Regex pattern for a valid Windows SID
+	$SidPattern = "^S-\d-\d+(-\d+)*$"
+
 	If($Server.DNSName)	# is there anything in the DNSName property
 	{
 		$tmp = $Server.DNSName.Split(".")
 		$xServerName = $tmp[0]
 		$tmp = $Null
 	}
-	ElseIf($Server.MachineName)	# is there anything in the MachineName property
+	ElseIf($Server.MachineName -and $Server.MachineName -notmatch $SidPattern)	
 	{
+		# is there anything in the MachineName property that is not a SID
 		$tmp = $Server.MachineName.Split("\")
 		$xServerName = $tmp[1]
 		$tmp = $Null
@@ -40934,6 +41141,7 @@ Function ProcessScriptSetup
 			$CVADSiteVersionReal = "Unknown"
 			Switch ($CVADSiteVersion)
 			{
+				"7.48"	{$CVADSiteVersionReal = "CVAD 2607"; Break}
 				"7.47"	{$CVADSiteVersionReal = "CVAD 2603"; Break}
 				"7.46"	{$CVADSiteVersionReal = "CVAD 2511"; Break}
 				"7.45"	{$CVADSiteVersionReal = "CVAD 2507"; Break}
@@ -41231,6 +41439,7 @@ Script cannot continue
 	$Script:CVADSiteVersionReal = "Unknown"
 	Switch ($Script:CVADSiteVersion)
 	{
+		"7.48"	{$Script:CVADSiteVersionReal = "CVAD 2607"; Break}
 		"7.47"	{$Script:CVADSiteVersionReal = "CVAD 2603"; Break}
 		"7.46"	{$Script:CVADSiteVersionReal = "CVAD 2511"; Break}
 		"7.45"	{$Script:CVADSiteVersionReal = "CVAD 2507"; Break}
@@ -42467,8 +42676,8 @@ ProcessScriptEnd
 # SIG # Begin signature block
 # MIIthQYJKoZIhvcNAQcCoIItdjCCLXICAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUVBJyXExiKdkAWYMoGnROEbha
-# eICggibfMIIFjTCCBHWgAwIBAgIQDpsYjvnQLefv21DiCEAYWjANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUfe7onEoKXF6IdPVjtrw3hdls
+# Mq2ggibfMIIFjTCCBHWgAwIBAgIQDpsYjvnQLefv21DiCEAYWjANBgkqhkiG9w0B
 # AQwFADBlMQswCQYDVQQGEwJVUzEVMBMGA1UEChMMRGlnaUNlcnQgSW5jMRkwFwYD
 # VQQLExB3d3cuZGlnaWNlcnQuY29tMSQwIgYDVQQDExtEaWdpQ2VydCBBc3N1cmVk
 # IElEIFJvb3QgQ0EwHhcNMjIwODAxMDAwMDAwWhcNMzExMTA5MjM1OTU5WjBiMQsw
@@ -42599,25 +42808,25 @@ ProcessScriptEnd
 # Ru7hAWE6bTEm4XYRkA6Tl4KSFLFk43esaUeqGkH/wyW4N7OigizwJWeukcyIPbAv
 # jSabnf7+Pu0VrFgoiovRDiyx3zEdmcif/sYQsfch28bZeUz2rtY/9TCA6TD8dC3J
 # E3rYkrhLULy7Dc90G6e8BlqmyIjlgp2+VqsS9/wQD7yFylIz0scmbKvFoW2jNrbM
-# 1pD2T7m3XDCCBu0wggTVoAMCAQICEAqA7xhLjfEFgtHEdqeVdGgwDQYJKoZIhvcN
+# 1pD2T7m3XDCCBu0wggTVoAMCAQICEAhP3DNPfkVO28MPj/mSGDUwDQYJKoZIhvcN
 # AQELBQAwaTELMAkGA1UEBhMCVVMxFzAVBgNVBAoTDkRpZ2lDZXJ0LCBJbmMuMUEw
 # PwYDVQQDEzhEaWdpQ2VydCBUcnVzdGVkIEc0IFRpbWVTdGFtcGluZyBSU0E0MDk2
-# IFNIQTI1NiAyMDI1IENBMTAeFw0yNTA2MDQwMDAwMDBaFw0zNjA5MDMyMzU5NTla
+# IFNIQTI1NiAyMDI1IENBMTAeFw0yNjA4MDUwMDAwMDBaFw0zNzExMDQyMzU5NTla
 # MGMxCzAJBgNVBAYTAlVTMRcwFQYDVQQKEw5EaWdpQ2VydCwgSW5jLjE7MDkGA1UE
 # AxMyRGlnaUNlcnQgU0hBMjU2IFJTQTQwOTYgVGltZXN0YW1wIFJlc3BvbmRlciAy
-# MDI1IDEwggIiMA0GCSqGSIb3DQEBAQUAA4ICDwAwggIKAoICAQDQRqwtEsae0Oqu
-# YFazK1e6b1H/hnAKAd/KN8wZQjBjMqiZ3xTWcfsLwOvRxUwXcGx8AUjni6bz52fG
-# Tfr6PHRNv6T7zsf1Y/E3IU8kgNkeECqVQ+3bzWYesFtkepErvUSbf+EIYLkrLKd6
-# qJnuzK8Vcn0DvbDMemQFoxQ2Dsw4vEjoT1FpS54dNApZfKY61HAldytxNM89PZXU
-# P/5wWWURK+IfxiOg8W9lKMqzdIo7VA1R0V3Zp3DjjANwqAf4lEkTlCDQ0/fKJLKL
-# kzGBTpx6EYevvOi7XOc4zyh1uSqgr6UnbksIcFJqLbkIXIPbcNmA98Oskkkrvt6l
-# PAw/p4oDSRZreiwB7x9ykrjS6GS3NR39iTTFS+ENTqW8m6THuOmHHjQNC3zbJ6nJ
-# 6SXiLSvw4Smz8U07hqF+8CTXaETkVWz0dVVZw7knh1WZXOLHgDvundrAtuvz0D3T
-# +dYaNcwafsVCGZKUhQPL1naFKBy1p6llN3QgshRta6Eq4B40h5avMcpi54wm0i2e
-# PZD5pPIssoszQyF4//3DoK2O65Uck5Wggn8O2klETsJ7u8xEehGifgJYi+6I03Uu
-# T1j7FnrqVrOzaQoVJOeeStPeldYRNMmSF3voIgMFtNGh86w3ISHNm0IaadCKCkUe
-# 2LnwJKa8TIlwCUNVwppwn4D3/Pt5pwIDAQABo4IBlTCCAZEwDAYDVR0TAQH/BAIw
-# ADAdBgNVHQ4EFgQU5Dv88jHt/f3X85FxYxlQQ89hjOgwHwYDVR0jBBgwFoAU729T
+# MDI2IDEwggIiMA0GCSqGSIb3DQEBAQUAA4ICDwAwggIKAoICAQC2e6byyf7NSvjU
+# m0xls/04xjD4fAkOkbnGQi7+Wpx81iYxfzViaxSIctuH3KSl5YEYpMuFgGsA31N2
+# D9ATMbfZdw5uaAhuWevQKhDdZIB4NnqcfpfpWQXJiQnDdAElETC+bhSEvNLGbA8D
+# twUpFMQ4yyYQSPqomT92osQAv6hBi47ATZS6JfVWe6XxhF4jJZ3iSAuf2Cros1cz
+# RSmWRHqMv9AfGZvp8ygYElhudpQjtcPpwoOl6QrZJUyV3iINvN4cO05prGV0fkjG
+# 426xDr2d3z9lcSIHkdvGPdGUrXdxfVbgOUVcp2/8ISEzwKPW++Wa+E2ujI91EZtu
+# kGWDJ/xZ27k3oHKEXBRGfRTqjOU+jE3ba/5++JSE/7oNHnjs5mekExYN96LV/mxU
+# bCKJb8pBNY4r3uD7hEmk/M81XhVgwDA7aMzYC3LZBg9WY5BMmbSay5ecmtJuXaB/
+# 0nKWmQmVZeqTVDgsmzHP5MQuhAJkiWNuC9MmCg9TZHXbJ2/yLVSov9p16UDTLtT0
+# +aa1vN71fHeu1qMLlLNB3WOB/ADCxr3S/1hxI92Z6jKgEED/btwIvbfuXkNNhg8M
+# tDg43c4tMZae9FvqMOt/9PvmAxF9TNIsIFB8G6yb36ZJZGUL8N/pL971DyLXcK6H
+# M5PYnH5X+eVtczhCgHCVQCF6XDAlPQIDAQABo4IBlTCCAZEwDAYDVR0TAQH/BAIw
+# ADAdBgNVHQ4EFgQUFMljijAu1Er7bpTz5uNAfvXszeIwHwYDVR0jBBgwFoAU729T
 # SunkBnx6yuKQVvYv1Ensy04wDgYDVR0PAQH/BAQDAgeAMBYGA1UdJQEB/wQMMAoG
 # CCsGAQUFBwMIMIGVBggrBgEFBQcBAQSBiDCBhTAkBggrBgEFBQcwAYYYaHR0cDov
 # L29jc3AuZGlnaWNlcnQuY29tMF0GCCsGAQUFBzAChlFodHRwOi8vY2FjZXJ0cy5k
@@ -42625,18 +42834,18 @@ ProcessScriptEnd
 # U0hBMjU2MjAyNUNBMS5jcnQwXwYDVR0fBFgwVjBUoFKgUIZOaHR0cDovL2NybDMu
 # ZGlnaWNlcnQuY29tL0RpZ2lDZXJ0VHJ1c3RlZEc0VGltZVN0YW1waW5nUlNBNDA5
 # NlNIQTI1NjIwMjVDQTEuY3JsMCAGA1UdIAQZMBcwCAYGZ4EMAQQCMAsGCWCGSAGG
-# /WwHATANBgkqhkiG9w0BAQsFAAOCAgEAZSqt8RwnBLmuYEHs0QhEnmNAciH45PYi
-# T9s1i6UKtW+FERp8FgXRGQ/YAavXzWjZhY+hIfP2JkQ38U+wtJPBVBajYfrbIYG+
-# Dui4I4PCvHpQuPqFgqp1PzC/ZRX4pvP/ciZmUnthfAEP1HShTrY+2DE5qjzvZs7J
-# IIgt0GCFD9ktx0LxxtRQ7vllKluHWiKk6FxRPyUPxAAYH2Vy1lNM4kzekd8oEARz
-# FAWgeW3az2xejEWLNN4eKGxDJ8WDl/FQUSntbjZ80FU3i54tpx5F/0Kr15zW/mJA
-# xZMVBrTE2oi0fcI8VMbtoRAmaaslNXdCG1+lqvP4FbrQ6IwSBXkZagHLhFU9HCrG
-# /syTRLLhAezu/3Lr00GrJzPQFnCEH1Y58678IgmfORBPC1JKkYaEt2OdDh4GmO0/
-# 5cHelAK2/gTlQJINqDr6JfwyYHXSd+V08X1JUPvB4ILfJdmL+66Gp3CSBXG6IwXM
-# ZUXBhtCyIaehr0XkBoDIGMUG1dUtwq1qmcwbdUfcSYCn+OwncVUXf53VJUNOaMWM
-# ts0VlRYxe5nK+At+DI96HAlXHAL5SlfYxJ7La54i71McVWRP66bW+yERNpbJCjyC
-# YG2j+bdpxo/1Cy4uPcU3AWVPGrbn5PhDBf3Froguzzhk++ami+r3Qrx5bIbY3TVz
-# giFI7Gq3zWcwggdZMIIFQaADAgECAhAJuCcgOBs2YT7S+XvCw8f0MA0GCSqGSIb3
+# /WwHATANBgkqhkiG9w0BAQsFAAOCAgEAjcU6YR6dUgrfmawJgH59KECxa9Ji8sEi
+# 2g10CBDaMiqsaxWyW5cwlT/6ZF5sFznazqVsoC85U9dqLOYqQwst+UQQoNlDHgKR
+# La3xoc+OReFreFhnTXSG0Vrd2E2CZqUfm+5a+He1MJ/h+tNLuA+0Zzhn/Fo+FDYA
+# HWZHx4R79ZsfRFYe9UiXpXBDf6DkUo183Y38NYmR/XfDYf7YZ+oR9t3flbDwK+hg
+# GMs0gNNp1w9Z2CyOyI5or/sSwomAuNQ0hWC9xoU4stD8aWsD7RkcmgVRs6vlIk3z
+# PKQ+ylcheWkMlj+CoVRlFE55pv0ZWCaFt04lwP/rdGHE9qEVQZtyRE42ox7oNgC/
+# r+Y4bSlZ3dw9K2x1xLtu6PkPKeLBFjzKigwfqm3Hm+k/+lnME8F5kPZTgiy2HLEH
+# klpryqs6QHnPXrRNeIzkAMyylnRN8P0wmirS0WkU+ywpEWFZ4QNg+9xS43tTuW9x
+# 0eXh7NDc1P/sV+zWxHXKH8tFt1ncHdVzqrZaYPyYMLSn2TOXajveJW1L3joiQSPs
+# WRGxkbDDW15jERFE4LvjnGu2O9zD1nLJSMdlYZEikl4w2w+q4IN/R+TIe0H4ngCI
+# 1moJCTbevGH4punIxM1Uoi0nmX3ZK+XbRT01uowE5ViXWHng0RgsmrX/EdYUo80r
+# 3TfMlkD0/YMwggdZMIIFQaADAgECAhAJuCcgOBs2YT7S+XvCw8f0MA0GCSqGSIb3
 # DQEBCwUAMGkxCzAJBgNVBAYTAlVTMRcwFQYDVQQKEw5EaWdpQ2VydCwgSW5jLjFB
 # MD8GA1UEAxM4RGlnaUNlcnQgVHJ1c3RlZCBHNCBDb2RlIFNpZ25pbmcgUlNBNDA5
 # NiBTSEEzODQgMjAyMSBDQTEwHhcNMjYwNzEzMDAwMDAwWhcNMjYxMDE4MjM1OTU5
@@ -42679,33 +42888,33 @@ ProcessScriptEnd
 # UzEXMBUGA1UEChMORGlnaUNlcnQsIEluYy4xQTA/BgNVBAMTOERpZ2lDZXJ0IFRy
 # dXN0ZWQgRzQgQ29kZSBTaWduaW5nIFJTQTQwOTYgU0hBMzg0IDIwMjEgQ0ExAhAJ
 # uCcgOBs2YT7S+XvCw8f0MAkGBSsOAwIaBQCgQDAZBgkqhkiG9w0BCQMxDAYKKwYB
-# BAGCNwIBBDAjBgkqhkiG9w0BCQQxFgQUxCDmAY/53Az/1wmeC6W5+k5WXR4wDQYJ
-# KoZIhvcNAQEBBQAEggIAo+Vsxb10UTjJ4or6lf2Czj3V8WXkAZu80y7an8AzX5+4
-# ZyTiZJ2z40Ol37Hc4KAmX4ByyPQOPWPD82ltKiwW/u1oFzggi/SBRnS31/f5VVIt
-# nhgSu025DtLsZpR129bxeyNufkWuhecwE0VVgOTKJXU2eBileVu6SIZ7Fr5EUwDV
-# pm+4I2oSGsV8oQjgQ6GNafNXT5nviJhGR2bA5dNZFg8cT+ekLMjgZJmJkf1A+IwG
-# vbPdwB9ZMB8GuneUyBoViwaI5oAYZhMMTcsBLHRXhqp+eREsx3yfaWI4xpFDd9b/
-# h6ILE8izXBppdj5XB8DVsWY/SaMVbtn6h/35hhjcHkNfGt/mcES8lD+XykPCXewn
-# 1ntYE6apTKWFzwJMvMEGSaqUG+Pz+gXXz8ydb61Hvl3191MKXmwk61DJj+KpNbPH
-# K3vMnWS+LQ+NXDOFSj05ChnBNdFA9SxZbmqVP1/KshyWWKsWvGTgjxLOl5/wvCd/
-# NYGak8qYt3xdUjxW8RkAaaDqOAsSxSfhqJIatPWIgaq/p4DvXCTbgb8HDNwT2I6A
-# PQ1lDhy8Z4/TNVdsGC2eh7oP8jPqTbbaCNy16tXYg+/1/M0+vxM5+t1257dhPQbE
-# Tm4sxytLaoX3o14HhbwEIhrqP7O+lfY8WlRqLEML1Rj2MBJ1Lu9ub2nTvZ1Xpwih
+# BAGCNwIBBDAjBgkqhkiG9w0BCQQxFgQUuc5H6+ronWcAJssT4TKncAgti8YwDQYJ
+# KoZIhvcNAQEBBQAEggIAELYsnS+CTinbRPDTPEuLOzKe02uCL3L0dbDWL6IegVB9
+# DG1YqfEVuDDghCIG/bZ2Fus+dJsAJNXz4/YCH5vZRJ6dlpdtBHDNRhosCniMVLUa
+# 1+11r7U9scT+gPxaDF4VgdFaiyIhz45kqkXAx8Irv1bWYPPOXPO3Xh/+WpoDULEr
+# ZiOs9UC4LKytpDFFR/OAePbjfCFWD8TOnXwU+uGbzRut5Mz9jpP1eHkqG4mOzYz6
+# ZDShCGhGqJxA/pdHX7WCaXUIeJHUQAtQXAIt1Zk79WmR/WEDhmZFvHeJMK1x185g
+# ZXeXOs7PoCMqjRsaO62Vhw0DVVSb7x/qmX5a8kzqEYSrqD0VL/8SovVetj0oONs+
+# AYniSdtpcpscnDP/enxxr5Obru8SGnZI+y+htDI8bexWlTknFMhiJND6nCPeEWUH
+# oms0RJW2YywfJTWYMl/77++y5rAiNKJFRHcTocIKSFZsb+78uRPAPtB6lhtnAGjs
+# yKORuAr13OwTxbHOPQOCkdc2OeGjR288c4+fMmUAjoYORpPdeHfYfTf911omM0NM
+# hdbJFUkHUbDv7NeSIUdwx5TPVQgRhZpC4mJDa7z5Vt4hYheSDBEJOzM1h+iLXJ4V
+# YxY4re9bF9DAfFXjZUlgdbPuUWP/I9BMdiwFldRbZM9feaoBN1QQWaIQ7MpyL36h
 # ggMmMIIDIgYJKoZIhvcNAQkGMYIDEzCCAw8CAQEwfTBpMQswCQYDVQQGEwJVUzEX
 # MBUGA1UEChMORGlnaUNlcnQsIEluYy4xQTA/BgNVBAMTOERpZ2lDZXJ0IFRydXN0
-# ZWQgRzQgVGltZVN0YW1waW5nIFJTQTQwOTYgU0hBMjU2IDIwMjUgQ0ExAhAKgO8Y
-# S43xBYLRxHanlXRoMA0GCWCGSAFlAwQCAQUAoGkwGAYJKoZIhvcNAQkDMQsGCSqG
-# SIb3DQEHATAcBgkqhkiG9w0BCQUxDxcNMjYwNzIzMTExMzA0WjAvBgkqhkiG9w0B
-# CQQxIgQgahUVfyrpYh5xTXXYj9Tp7//v7cu9sHS8py9cd7TJXV4wDQYJKoZIhvcN
-# AQEBBQAEggIAbiroQjmXVkOWfj+/a3ND0vceuckiPUIj3IweP9+Y1mKeGXwq7sgS
-# lZrl/1yfTawfOau6RhUUCOp5PjmRyGUcEWMB9gVnOayvRwu9tsQUwu3z21OHw5yH
-# TIMG8YYbPNlz+t0p2Eg8st6mCINzPTuE/PugNfjaDNjSHvJgaIZyaP8Q1GO0oA/1
-# 8YZOPnQeGSoC9wvNcH2ICsSFV4JQOAZYqfRj8qhpEIG5LW6bStuP6Wt38kkx0r2m
-# VFMB9QDHweikEMpgOyEKNDPTDV+BjCqdra7L3tyNR++MHQZOioZq97wN9MRr/n3S
-# /pUF8Q6vSn9yVzaq4qWVTQI2CtkdhqvgeFtcOpyieVAeImYNnCaSZLmGg5ZoQH3C
-# L1814p/NTC5wFff1CPsNuVyqvUuExg1ee0ei6gf7m67f1ERvUlgOdY21LYn7cLdV
-# sy+/lH8jS+4NixVh6v0MmUE7nrBFwouDIMNgkHaHkSscZiUT+kthvwFz75V9yaXO
-# ZOldKKcqV3Bxxco2Imgdnq7oaVyDxIrv9erGbGnKBVEpovGzxnzmf0N0vP/Gbkhn
-# Et1zFBSVa240QB9bh7vE213czsB9RJDkP+ltGvC6MIeeOrxvG8bxa/FaiqsuLAnt
-# 47R9GlNmCbb0otLLRrLSINugCZRuXKpJGC3AAKYd5LDbTfZoxPR2eiU=
+# ZWQgRzQgVGltZVN0YW1waW5nIFJTQTQwOTYgU0hBMjU2IDIwMjUgQ0ExAhAIT9wz
+# T35FTtvDD4/5khg1MA0GCWCGSAFlAwQCAQUAoGkwGAYJKoZIhvcNAQkDMQsGCSqG
+# SIb3DQEHATAcBgkqhkiG9w0BCQUxDxcNMjYwOTIyMTQwMzQ2WjAvBgkqhkiG9w0B
+# CQQxIgQgiPTI0v6vJbHehJSGLVSrzKmWnPLfvKqjz0cKsgfvc8cwDQYJKoZIhvcN
+# AQEBBQAEggIAAqiwVLtZ9CRALJYcMNM/ju4H1n4WoQEcxFQCvjbR1r5Asm5/X2P/
+# K4qydAG9fkkxtjhi8DeLOIUcTTzqgcSOLhQttfldEdBiETTam8H3ndl8umc34k/V
+# LgMK+JiGSEiUJqqe5h9lfySvyG0UhGx5A5uReV8DLE0K/GsMofUVHzaEfUAXFxzN
+# K4YqPzamU2PoqwGghuuBqdr+nUwlYfg+zQbWKj+uUGuZxDOV9IzsSMSSppf4Onnj
+# 2VwAv0qYDHpah46dh0yzJXm8GNQpkO26OOItAfhv1D8mzA0L909OY+hzBE/Cbrlv
+# zx/p7RtJZ3WIHlr4b5I6DOswcUjxqGjvFjDvz6+NCabV4iUK3Xk7I4sbWN53Di33
+# NbG9R85ZmI1adG/gYWY1SmhJkjFNJ+Ckvaw9YG5JvKazS5wiZa8jYu4RS0Sdc+B5
+# km28aW4QGYBtBDcaSeFFnQBR2xKTP6fmJ1NzreRBZlTIW9P2iINDJzWLTWwgVGPC
+# SeI1/O9BdkEE17EsYtzKHvkGDDahpR+PfDIktxj7nSTau3jkB5gemrwkrYV+1SXB
+# 0mb5PExoR+E/FGLXakFJPJGBdaWBSUcqoAQFA7TvPgw+4C3bHHC1UMrz3FUgH2ip
+# HY6NA01wp+7anYrepwIWK2zRnW3QEEa8TNdADt9nhJaVTwJ0xWiZDB8=
 # SIG # End signature block

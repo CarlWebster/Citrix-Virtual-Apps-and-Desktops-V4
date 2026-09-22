@@ -1056,9 +1056,9 @@
 	This script creates a Word, PDF, plain text, or HTML document.
 .NOTES
 	NAME: CVAD_Inventory_V4.ps1
-	VERSION: 4.00
+	VERSION: 4.10 Beta 1
 	AUTHOR: Carl Webster
-	LASTEDIT: July 23, 2026
+	LASTEDIT: September 22, 2026
 #>
 
 #endregion
@@ -1251,6 +1251,35 @@ Param(
 
 # This script is based on the 3.44 script
 #
+#Version 4.10
+#	Thanks to Ferroque Systems for lab access and help in gathering the necessary data for this update
+#
+#	Add support for CVAD 2607/7.48
+#
+#	In Function GetComputerWMIInfo,
+#		Fixed bug where if run on a localhost that is also the Citrix DB and/or license server,
+#		the call to Get-CimInstance failed with the FQDN of the localhost
+#
+#	In Function GetRolePermissions:
+#		Added new permissions
+#			ExtendedTracingAOT_Manage	(Manage Always on Tracing Capture Sessions - Other permissions)
+#			ExtendedTracingAOT_Read		(View Always on Tracing Capture Session - Other permissions)
+#
+#	In Functions OutputMachineDetails and OutputServerOSMachine,
+#		Fixed bugs to prevent an empty machine name and from processing a SID
+#
+#	In Function ProcessCitrixPolicies, add new policies
+#		AssistantApp\Enable Assistant App Notification Dialog
+#		ICA\Clipboard sharing scope
+#		ICA\MTU Rediscovery
+#		ICA\Authentication\Allow web sign-in
+#		ICA\Authentication\Microsoft Entra single sign-on
+#		Profile Management\Profile container settings\Enable BindLink redirection
+#
+#	Updated the help text
+#
+#	Updated the ReadMe file
+#
 #Version 4.00 23-Jul-2026
 #	Thanks to Ferroque Systems for lab access and help in gathering the necessary data for this update
 #	Thanks to Hal Lange for running a bunch of tests for me
@@ -1379,9 +1408,9 @@ $SaveEAPreference         = $ErrorActionPreference
 $ErrorActionPreference    = 'SilentlyContinue'
 
 #stuff for report footer
-$script:MyVersion   = "4.00"
+$script:MyVersion   = "4.10 Beta 1"
 $Script:ScriptName  = "CVAD_Inventory_V4.ps1"
-$tmpdate            = [datetime] "07/23/2026"
+$tmpdate            = [datetime] "09/22/2026"
 $Script:ReleaseDate = $tmpdate.ToUniversalTime().ToShortDateString()
 
 If($Null -eq $HTML)
@@ -1892,6 +1921,8 @@ Function GetComputerWMIInfo
 	# modified 17-Aug-2016 to fix a few issues with Text and HTML output
 	# modified 29-Apr-2018 to change from Arrays to New-Object System.Collections.ArrayList
 	# modified 11-Mar-2022 changed from using Get-WmiObject to Get-CimInstance
+	# modified 22-Sep-2026 fixed bug where if run on a localhost that is also the Citrix DB and/or license server,
+	#	the call to Get-CimInstance failed with the FQDN of the localhost
 
 	#Get Computer info
 	Write-Verbose "$(Get-Date -Format G): `t`tProcessing WMI Computer information"
@@ -1914,7 +1945,7 @@ Function GetComputerWMIInfo
 	
 	Try
 	{
-		If($RemoteComputerName -eq $env:computername)
+		If($RemoteComputerName -like "*$env:computername*")
 		{
 			$Results = Get-CimInstance -ClassName win32_computersystem -Verbose:$False
 		}
@@ -1935,7 +1966,7 @@ Function GetComputerWMIInfo
 		@{N="TotalPhysicalRam"; E={[math]::round(($_.TotalPhysicalMemory / 1GB),0)}}, `
 		NumberOfProcessors, NumberOfLogicalProcessors
 		$Results = $Null
-		If($RemoteComputerName -eq $env:computername)
+		If($RemoteComputerName -like "*$env:computername*")
 		{
 			[string]$ComputerOS = (Get-CimInstance -ClassName Win32_OperatingSystem -EA 0 -Verbose:$False).Caption
 		}
@@ -2002,7 +2033,7 @@ Function GetComputerWMIInfo
 
 	Try
 	{
-		If($RemoteComputerName -eq $env:computername)
+		If($RemoteComputerName -like "*$env:computername*")
 		{
 			$Results = Get-CimInstance -ClassName Win32_LogicalDisk -Verbose:$False
 		}
@@ -2083,7 +2114,7 @@ Function GetComputerWMIInfo
 
 	Try
 	{
-		If($RemoteComputerName -eq $env:computername)
+		If($RemoteComputerName -like "*$env:computername*")
 		{
 			$Results = Get-CimInstance -ClassName win32_Processor -Verbose:$False
 		}
@@ -2162,7 +2193,7 @@ Function GetComputerWMIInfo
 	
 	Try
 	{
-		If($RemoteComputerName -eq $env:computername)
+		If($RemoteComputerName -like "*$env:computername*")
 		{
 			$Results = Get-CimInstance -ClassName win32_networkadapterconfiguration -Verbose:$False
 		}
@@ -2197,7 +2228,7 @@ Function GetComputerWMIInfo
 			{
 				Try
 				{
-					If($RemoteComputerName -eq $env:computername)
+					If($RemoteComputerName -like "*$env:computername*")
 					{
 						$ThisNic = Get-CimInstance -ClassName win32_networkadapter -Verbose:$False | Where-Object {$_.index -eq $nic.index}
 					}
@@ -2312,7 +2343,7 @@ Function OutputComputerItem
 	try 
 	{
 
-		If($RemoteComputerName -eq $env:computername)
+		If($RemoteComputerName -like "*$env:computername*")
 		{
 			$PowerPlan = (Get-CimInstance -ClassName Win32_PowerPlan -Namespace "root\cimv2\power" -Verbose:$False |
 				Where-Object {$_.IsActive -eq $true} |
@@ -2652,7 +2683,7 @@ Function OutputNicItem
 {
 	Param([object]$Nic, [object]$ThisNic, [string]$RemoteComputerName)
 	
-	If($RemoteComputerName -eq $env:computername)
+	If($RemoteComputerName -like "*$env:computername*")
 	{
 		$powerMgmt = Get-CimInstance -ClassName MSPower_DeviceEnable -Namespace "root\wmi" -Verbose:$False |
 			Where-Object{$_.InstanceName -match [regex]::Escape($ThisNic.PNPDeviceID)}
@@ -2707,7 +2738,7 @@ Function OutputNicItem
 	Try
 	{
 		#https://ios.developreference.com/article/10085450/How+do+I+enable+VRSS+(Virtual+Receive+Side+Scaling)+for+a+Windows+VM+without+relying+on+Enable-NetAdapterRSS%3F
-		If($RemoteComputerName -eq $env:computername)
+		If($RemoteComputerName -like "*$env:computername*")
 		{
 			$RSSEnabled = (Get-CimInstance -ClassName MSFT_NetAdapterRssSettingData -Namespace "root\StandardCimV2" -ea 0 -Verbose:$False).Enabled
 		}
@@ -8459,6 +8490,23 @@ Function OutputMachineDetails
 	$tmp = $Machine.DNSName.Split(".")
 	$xMachineName = $tmp[0]
 	$tmp = $Null
+
+	#don't use the MachineName property as it is a SID
+	If($Machine.DNSName)	# is there anything in the DNSName property
+	{
+		$tmp = $Machine.DNSName.Split(".")
+		$xMachineName = $tmp[0]
+		$tmp = $Null
+	}
+	ElseIf($Machine.HostedMachineName)	# is there anything in the HostedMachineName property
+	{
+		$xMachineName = $Machine.HostedMachineName
+	}
+	Else	# error, there is no name for the Machine
+	{
+		$xMachineName = "error, there was no name found for the Machine"
+	}
+
 	Write-Verbose "$(Get-Date -Format G): `t`tOutput Machine $xMachineName"
 	
 	#first see if VDA is Linux
@@ -16676,6 +16724,31 @@ Function ProcessCitrixPolicies
 						}
 					}
 
+					#new section in 2607
+					Write-Verbose "$(Get-Date -Format G): `t`t`tAssistantApp"
+					If((validStateProp $Setting EnableAssistantAppNotificationDialog State ) -and ($Setting.EnableAssistantAppNotificationDialog.State -ne "NotConfigured"))
+					{
+						$txt = "AssistantApp\Enable Assistant App Notification Dialog"
+						If($MSWord -or $PDF)
+						{
+							$SettingsWordTable += @{
+							Text = $txt;
+							Value = $Setting.EnableAssistantAppNotificationDialogt.State;
+							}
+						}
+						If($HTML)
+						{
+							$rowdata += @(,(
+							$txt,$htmlbold,
+							$Setting.EnableAssistantAppNotificationDialog.State,$htmlwhite))
+						}
+						If($Text)
+						{
+							OutputPolicySetting $txt $Setting.EnableAssistantAppNotificationDialog.State
+						}
+					}
+					#end new section
+					
 					Write-Verbose "$(Get-Date -Format G): `t`t`tICA"
 					If((validStateProp $Setting ApplicationLaunchWaitTimeout State ) -and ($Setting.ApplicationLaunchWaitTimeout.State -ne "NotConfigured"))
 					{
@@ -16813,6 +16886,39 @@ Function ProcessCitrixPolicies
 							"UpdateToClientDenied"	{$tmp = "Host selection changes are not updated to client"; Break}
 							"UpdateToHostDenied"	{$tmp = "Client selection changes are not updated to host"; Break}
 							Default					{$tmp = "Clipboard selection update mode: $($Setting.ClipboardSelectionUpdateMode.Value)"; Break}
+						}
+						
+						If($MSWord -or $PDF)
+						{
+							$SettingsWordTable += @{
+							Text = $txt;
+							Value = $tmp;
+							}
+						}
+						If($HTML)
+						{
+							$rowdata += @(,(
+							$txt,$htmlbold,
+							$tmp,$htmlwhite))
+						}
+						If($Text)
+						{
+							OutputPolicySetting $txt $tmp 
+						}
+						$tmp = $Null
+					}
+					If((validStateProp $Setting ClipboardSharingScope State ) -and ($Setting.ClipboardSharingScope.State -ne "NotConfigured"))
+					{
+						#new in 2607
+						$txt = "ICA\Clipboard sharing scope"
+						$tmp = ""
+						Switch ($Setting.ClipboardSharingScope.Value)
+						{
+							"Unlimited"	{$tmp = "Unlimited (default)"; Break}
+							"VDA"		{$tmp = "VDA"; Break}
+							"CEP"		{$tmp = "CEP"; Break}
+							"VDACEP"	{$tmp = "VDA and CEP"; Break}
+							Default		{$tmp = "Clipboard sharing scope: $($Setting.ClipboardSharingScope.Value)"; Break}
 						}
 						
 						If($MSWord -or $PDF)
@@ -17304,6 +17410,29 @@ Function ProcessCitrixPolicies
 						If($Text)
 						{
 							OutputPolicySetting $txt $Setting.AllowScannerMacImageCaptureRedirection.State 
+						}
+					}
+					If((validStateProp $Setting MtuRediscovery State ) -and ($Setting.MtuRediscovery.State -ne "NotConfigured"))
+					{
+						#new in 2607
+						
+						$txt = "ICA\MTU Rediscovery"
+						If($MSWord -or $PDF)
+						{
+							$SettingsWordTable += @{
+							Text = $txt;
+							Value = $Setting.MtuRediscovery.Value;
+							}
+						}
+						If($HTML)
+						{
+							$rowdata += @(,(
+							$txt,$htmlbold,
+							$Setting.MtuRediscovery.Value,$htmlwhite))
+						}
+						If($Text)
+						{
+							OutputPolicySetting $txt $Setting.MtuRediscovery.Value 
 						}
 					}
 					If((validStateProp $Setting PrimarySelectionUpdateMode State ) -and ($Setting.PrimarySelectionUpdateMode.State -ne "NotConfigured"))
@@ -18156,6 +18285,52 @@ Function ProcessCitrixPolicies
 							OutputPolicySetting $txt $Setting.LossTolerantAudio.State 
 						}
 					}
+
+					#new section in 2607
+					Write-Verbose "$(Get-Date -Format G): `t`t`tICA\Authentication"
+					If((validStateProp $Setting AllowWebSignIn State ) -and ($Setting.AllowWebSignIn.State -ne "NotConfigured"))
+					{
+						$txt = "ICA\Authentication\Allow web sign-in"
+						If($MSWord -or $PDF)
+						{
+							$SettingsWordTable += @{
+							Text = $txt;
+							Value = $Setting.AllowWebSignIn.State;
+							}
+						}
+						If($HTML)
+						{
+							$rowdata += @(,(
+							$txt,$htmlbold,
+							$Setting.AllowWebSignIn.State,$htmlwhite))
+						}
+						If($Text)
+						{
+							OutputPolicySetting $txt $Setting.AllowWebSignIn.State 
+						}
+					}
+					If((validStateProp $Setting MicrosoftEntraSSOn State ) -and ($Setting.MicrosoftEntraSSOn.State -ne "NotConfigured"))
+					{
+						$txt = "ICA\Authentication\Microsoft Entra single sign-on"
+						If($MSWord -or $PDF)
+						{
+							$SettingsWordTable += @{
+							Text = $txt;
+							Value = $Setting.MicrosoftEntraSSOn.State;
+							}
+						}
+						If($HTML)
+						{
+							$rowdata += @(,(
+							$txt,$htmlbold,
+							$Setting.MicrosoftEntraSSOn.State,$htmlwhite))
+						}
+						If($Text)
+						{
+							OutputPolicySetting $txt $Setting.MicrosoftEntraSSOn.State 
+						}
+					}
+					#end new section
 
 					Write-Verbose "$(Get-Date -Format G): `t`t`tICA\Auto Client Reconnect"
 					If((validStateProp $Setting AutoClientReconnect State ) -and ($Setting.AutoClientReconnect.State -ne "NotConfigured"))
@@ -29092,6 +29267,28 @@ Function ProcessCitrixPolicies
 					}
 
 					Write-Verbose "$(Get-Date -Format G): `t`t`tProfile Management\Profile container settings"
+					If((validStateProp $Setting EnableBindLink State ) -and ($Setting.EnableBindLink.State -ne "NotConfigured"))
+					{
+						#new in 2607
+						$txt = "Profile Management\Profile container settings\Enable BindLink redirection"
+						If($MSWord -or $PDF)
+						{
+							$SettingsWordTable += @{
+							Text = $txt;
+							Value = $Setting.EnableBindLink.State;
+							}
+						}
+						If($HTML)
+						{
+							$rowdata += @(,(
+							$txt,$htmlbold,
+							$Setting.EnableBindLink.State,$htmlwhite))
+						}
+						If($Text)
+						{
+							OutputPolicySetting $txt $Setting.EnableBindLink.State
+						}
+					}
 					If((validStateProp $Setting DisableConcurrentAccessToOneDriveContainer State ) -and ($Setting.DisableConcurrentAccessToOneDriveContainer.State -ne "NotConfigured"))
 					{
 						$txt = "Profile Management\Profile container settings\Enable exclusive access to VHD containers - OneDrive container"
@@ -36747,6 +36944,8 @@ Function GetRolePermissions
 			"EnvTest"													{$Results.Add("Run environment tests", "Other permissions")}
 			"ExtendedTracing_Manage"									{$Results.Add("Manage Trace Capture Sessions", "Other permissions")} 
 			"ExtendedTracing_Read"										{$Results.Add("View Trace Capture Sessions", "Other permissions")} 
+			"ExtendedTracingAOT_Manage"									{$Results.Add("Manage Always on Tracing Capture Sessions", "Other permissions")} #new in 2607 
+			"ExtendedTracingAOT_Read"									{$Results.Add("View Always on Tracing Capture Sessions", "Other permissions")} #new in 2607
 			"Global_Read"												{$Results.Add("Read Site Configuration (Global_Read)", "Other permissions")}
 			"Global_Write"												{$Results.Add("Update Site Configuration (Global_Write)", "Other permissions")}
 			"Machine_VdaAotTracing_Configuration"						{$Results.Add("Create, view, modify, and delete machine configurations for VDA Always on Tracing.", "Other permissions")}  #new in 2603
@@ -38801,14 +39000,18 @@ Function OutputDesktopOSMachine
 {
 	Param([object]$Desktop)
 
+	# Regex pattern for a valid Windows SID
+	$SidPattern = "^S-\d-\d+(-\d+)*$"
+
 	If($Desktop.DNSName)	# is there anything in the DNSName property
 	{
 		$tmp = $Desktop.DNSName.Split(".")
 		$xDesktopName = $tmp[0]
 		$tmp = $Null
 	}
-	ElseIf($Desktop.MachineName)	# is there anything in the MachineName property
+	ElseIf($Desktop.MachineName -and $Desktop.MachineName -notmatch $SidPatter)	
 	{
+		# is there anything in the MachineName property and it is not a SID
 		$tmp = $Desktop.MachineName.Split("\")
 		$xDesktopName = $tmp[1]
 		$tmp = $Null
@@ -38970,15 +39173,19 @@ Function OutputDesktopOSMachine
 Function OutputServerOSMachine 
 {
 	Param([object]$Server)
-	
+
+	# Regex pattern for a valid Windows SID
+	$SidPattern = "^S-\d-\d+(-\d+)*$"
+
 	If($Server.DNSName)	# is there anything in the DNSName property
 	{
 		$tmp = $Server.DNSName.Split(".")
 		$xServerName = $tmp[0]
 		$tmp = $Null
 	}
-	ElseIf($Server.MachineName)	# is there anything in the MachineName property
+	ElseIf($Server.MachineName -and $Server.MachineName -notmatch $SidPattern)	
 	{
+		# is there anything in the MachineName property that is not a SID
 		$tmp = $Server.MachineName.Split("\")
 		$xServerName = $tmp[1]
 		$tmp = $Null
@@ -40934,6 +41141,7 @@ Function ProcessScriptSetup
 			$CVADSiteVersionReal = "Unknown"
 			Switch ($CVADSiteVersion)
 			{
+				"7.48"	{$CVADSiteVersionReal = "CVAD 2607"; Break}
 				"7.47"	{$CVADSiteVersionReal = "CVAD 2603"; Break}
 				"7.46"	{$CVADSiteVersionReal = "CVAD 2511"; Break}
 				"7.45"	{$CVADSiteVersionReal = "CVAD 2507"; Break}
@@ -41231,6 +41439,7 @@ Script cannot continue
 	$Script:CVADSiteVersionReal = "Unknown"
 	Switch ($Script:CVADSiteVersion)
 	{
+		"7.48"	{$Script:CVADSiteVersionReal = "CVAD 2607"; Break}
 		"7.47"	{$Script:CVADSiteVersionReal = "CVAD 2603"; Break}
 		"7.46"	{$Script:CVADSiteVersionReal = "CVAD 2511"; Break}
 		"7.45"	{$Script:CVADSiteVersionReal = "CVAD 2507"; Break}
