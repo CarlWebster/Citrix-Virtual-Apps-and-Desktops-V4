@@ -1257,8 +1257,9 @@ Param(
 #	Add support for CVAD 2607/7.48
 #
 #	In Function GetComputerWMIInfo,
-#		Fixed bug where if run on a localhost that is also the Citrix DB and/or license server,
-#		the call to Get-CimInstance failed with the FQDN of the localhost
+#		Thanks to the help from Guy Leech, we fixed bug where if run on a localhost 
+#		that is also the Citrix DB and/or license server, the call to Get-CimInstance failed with the 
+#		FQDN of the localhost
 #
 #	In Function GetRolePermissions:
 #		Added new permissions
@@ -1266,7 +1267,7 @@ Param(
 #			ExtendedTracingAOT_Read		(View Always on Tracing Capture Session - Other permissions)
 #
 #	In Functions OutputMachineDetails and OutputServerOSMachine,
-#		Fixed bugs to prevent an empty machine name and from processing a SID
+#		Fixed bugs to prevent an empty machine name and to prevent processing a SID
 #
 #	In Function ProcessCitrixPolicies, add new policies
 #		AssistantApp\Enable Assistant App Notification Dialog
@@ -1408,7 +1409,7 @@ $SaveEAPreference         = $ErrorActionPreference
 $ErrorActionPreference    = 'SilentlyContinue'
 
 #stuff for report footer
-$script:MyVersion   = "4.10 Beta 1"
+$script:MyVersion   = "4.10 Beta 2"
 $Script:ScriptName  = "CVAD_Inventory_V4.ps1"
 $tmpdate            = [datetime] "09/22/2026"
 $Script:ReleaseDate = $tmpdate.ToUniversalTime().ToShortDateString()
@@ -1921,8 +1922,9 @@ Function GetComputerWMIInfo
 	# modified 17-Aug-2016 to fix a few issues with Text and HTML output
 	# modified 29-Apr-2018 to change from Arrays to New-Object System.Collections.ArrayList
 	# modified 11-Mar-2022 changed from using Get-WmiObject to Get-CimInstance
-	# modified 22-Sep-2026 fixed bug where if run on a localhost that is also the Citrix DB and/or license server,
-	#	the call to Get-CimInstance failed with the FQDN of the localhost
+	# modified 22-Sep-2026 Thanks to the help from Guy Leech, we fixed bug where if run on a localhost 
+	#	that is also the Citrix DB and/or license server, the call to Get-CimInstance failed with the 
+	#	FQDN of the localhost
 
 	#Get Computer info
 	Write-Verbose "$(Get-Date -Format G): `t`tProcessing WMI Computer information"
@@ -1945,7 +1947,7 @@ Function GetComputerWMIInfo
 	
 	Try
 	{
-		If($RemoteComputerName -like "*$env:computername*")
+		If($RemoteComputerName -match "^$env:COMPUTERNAME\b")
 		{
 			$Results = Get-CimInstance -ClassName win32_computersystem -Verbose:$False
 		}
@@ -1966,7 +1968,8 @@ Function GetComputerWMIInfo
 		@{N="TotalPhysicalRam"; E={[math]::round(($_.TotalPhysicalMemory / 1GB),0)}}, `
 		NumberOfProcessors, NumberOfLogicalProcessors
 		$Results = $Null
-		If($RemoteComputerName -like "*$env:computername*")
+		
+		If($RemoteComputerName -match "^$env:COMPUTERNAME\b")
 		{
 			[string]$ComputerOS = (Get-CimInstance -ClassName Win32_OperatingSystem -EA 0 -Verbose:$False).Caption
 		}
@@ -2033,7 +2036,7 @@ Function GetComputerWMIInfo
 
 	Try
 	{
-		If($RemoteComputerName -like "*$env:computername*")
+		If($RemoteComputerName -match "^$env:COMPUTERNAME\b")
 		{
 			$Results = Get-CimInstance -ClassName Win32_LogicalDisk -Verbose:$False
 		}
@@ -2114,7 +2117,7 @@ Function GetComputerWMIInfo
 
 	Try
 	{
-		If($RemoteComputerName -like "*$env:computername*")
+		If($RemoteComputerName -match "^$env:COMPUTERNAME\b")
 		{
 			$Results = Get-CimInstance -ClassName win32_Processor -Verbose:$False
 		}
@@ -2193,7 +2196,7 @@ Function GetComputerWMIInfo
 	
 	Try
 	{
-		If($RemoteComputerName -like "*$env:computername*")
+		If($RemoteComputerName -match "^$env:COMPUTERNAME\b")
 		{
 			$Results = Get-CimInstance -ClassName win32_networkadapterconfiguration -Verbose:$False
 		}
@@ -2228,7 +2231,7 @@ Function GetComputerWMIInfo
 			{
 				Try
 				{
-					If($RemoteComputerName -like "*$env:computername*")
+					If($RemoteComputerName -match "^$env:COMPUTERNAME\b")
 					{
 						$ThisNic = Get-CimInstance -ClassName win32_networkadapter -Verbose:$False | Where-Object {$_.index -eq $nic.index}
 					}
@@ -2343,7 +2346,7 @@ Function OutputComputerItem
 	try 
 	{
 
-		If($RemoteComputerName -like "*$env:computername*")
+		If($RemoteComputerName -match "^$env:COMPUTERNAME\b")
 		{
 			$PowerPlan = (Get-CimInstance -ClassName Win32_PowerPlan -Namespace "root\cimv2\power" -Verbose:$False |
 				Where-Object {$_.IsActive -eq $true} |
@@ -2683,7 +2686,7 @@ Function OutputNicItem
 {
 	Param([object]$Nic, [object]$ThisNic, [string]$RemoteComputerName)
 	
-	If($RemoteComputerName -like "*$env:computername*")
+	If($RemoteComputerName -match "^$env:COMPUTERNAME\b")
 	{
 		$powerMgmt = Get-CimInstance -ClassName MSPower_DeviceEnable -Namespace "root\wmi" -Verbose:$False |
 			Where-Object{$_.InstanceName -match [regex]::Escape($ThisNic.PNPDeviceID)}
@@ -2738,7 +2741,7 @@ Function OutputNicItem
 	Try
 	{
 		#https://ios.developreference.com/article/10085450/How+do+I+enable+VRSS+(Virtual+Receive+Side+Scaling)+for+a+Windows+VM+without+relying+on+Enable-NetAdapterRSS%3F
-		If($RemoteComputerName -like "*$env:computername*")
+		If($RemoteComputerName -match "^$env:COMPUTERNAME\b")
 		{
 			$RSSEnabled = (Get-CimInstance -ClassName MSFT_NetAdapterRssSettingData -Namespace "root\StandardCimV2" -ea 0 -Verbose:$False).Enabled
 		}
@@ -42676,8 +42679,8 @@ ProcessScriptEnd
 # SIG # Begin signature block
 # MIIthQYJKoZIhvcNAQcCoIItdjCCLXICAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUfe7onEoKXF6IdPVjtrw3hdls
-# Mq2ggibfMIIFjTCCBHWgAwIBAgIQDpsYjvnQLefv21DiCEAYWjANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQU4SiWITZZMFjeqad6yBpzgGt7
+# oFyggibfMIIFjTCCBHWgAwIBAgIQDpsYjvnQLefv21DiCEAYWjANBgkqhkiG9w0B
 # AQwFADBlMQswCQYDVQQGEwJVUzEVMBMGA1UEChMMRGlnaUNlcnQgSW5jMRkwFwYD
 # VQQLExB3d3cuZGlnaWNlcnQuY29tMSQwIgYDVQQDExtEaWdpQ2VydCBBc3N1cmVk
 # IElEIFJvb3QgQ0EwHhcNMjIwODAxMDAwMDAwWhcNMzExMTA5MjM1OTU5WjBiMQsw
@@ -42888,33 +42891,33 @@ ProcessScriptEnd
 # UzEXMBUGA1UEChMORGlnaUNlcnQsIEluYy4xQTA/BgNVBAMTOERpZ2lDZXJ0IFRy
 # dXN0ZWQgRzQgQ29kZSBTaWduaW5nIFJTQTQwOTYgU0hBMzg0IDIwMjEgQ0ExAhAJ
 # uCcgOBs2YT7S+XvCw8f0MAkGBSsOAwIaBQCgQDAZBgkqhkiG9w0BCQMxDAYKKwYB
-# BAGCNwIBBDAjBgkqhkiG9w0BCQQxFgQUuc5H6+ronWcAJssT4TKncAgti8YwDQYJ
-# KoZIhvcNAQEBBQAEggIAELYsnS+CTinbRPDTPEuLOzKe02uCL3L0dbDWL6IegVB9
-# DG1YqfEVuDDghCIG/bZ2Fus+dJsAJNXz4/YCH5vZRJ6dlpdtBHDNRhosCniMVLUa
-# 1+11r7U9scT+gPxaDF4VgdFaiyIhz45kqkXAx8Irv1bWYPPOXPO3Xh/+WpoDULEr
-# ZiOs9UC4LKytpDFFR/OAePbjfCFWD8TOnXwU+uGbzRut5Mz9jpP1eHkqG4mOzYz6
-# ZDShCGhGqJxA/pdHX7WCaXUIeJHUQAtQXAIt1Zk79WmR/WEDhmZFvHeJMK1x185g
-# ZXeXOs7PoCMqjRsaO62Vhw0DVVSb7x/qmX5a8kzqEYSrqD0VL/8SovVetj0oONs+
-# AYniSdtpcpscnDP/enxxr5Obru8SGnZI+y+htDI8bexWlTknFMhiJND6nCPeEWUH
-# oms0RJW2YywfJTWYMl/77++y5rAiNKJFRHcTocIKSFZsb+78uRPAPtB6lhtnAGjs
-# yKORuAr13OwTxbHOPQOCkdc2OeGjR288c4+fMmUAjoYORpPdeHfYfTf911omM0NM
-# hdbJFUkHUbDv7NeSIUdwx5TPVQgRhZpC4mJDa7z5Vt4hYheSDBEJOzM1h+iLXJ4V
-# YxY4re9bF9DAfFXjZUlgdbPuUWP/I9BMdiwFldRbZM9feaoBN1QQWaIQ7MpyL36h
+# BAGCNwIBBDAjBgkqhkiG9w0BCQQxFgQUCKrldL0V9Kb3xYn+x7l8z7WfPrQwDQYJ
+# KoZIhvcNAQEBBQAEggIAl6iZMQFg+qntq7l/LdOfPyon+sLldWY61UTQ0rjjNHWW
+# 9bcF3654+uJeCM9i4RUF59kOAWwI43afenUR3nE62uPXRIN0NnASuXjlt52MAMBe
+# Lf8PLqKMNfmljIuNKrETgIrI7RCi/bgOKpAYr2TlqNftg/3ASn6FgWTvddzXDsr/
+# hLLYEgTxzLss4HUNbIZoSu9NiFB0wZNRp02zVUz/xYAHJ/lR1lFk/1kdy2tvNsFV
+# tBvvwR2pCenx+f4DfuGUhdageXQXwmr5UhmHwKag6SKqGCzXu8EKzoGrWcAQ/vxA
+# 8tmtmZ//vlFOuPQqEWOV2TqF2VpxLMeOmtdZzsbKm7pvnAPDrqBSv7ncejjFBdhQ
+# HW7mGyJhGmYheMuqZBlcgBOGVogsgsxS4J3CaFJQdWxW0hAc6r7OMJPvtDlcKhBo
+# rHg6DGyOyDyr66AdSbMbo1EvU7uWukCO0VVMrC1CAp10cRnVBLiM87oXe5BljzJc
+# YPrH7xXEXe7D3Tg0jrp3gE9oNX/ODPmVIvkBMoWGGLcsAdP5g3PHEfptNr4VfpPz
+# nOz0JIgrMjDzvP0sSoPwa+TT/GRCiUkt8FyQy1pEmHCyj531ZjMriXN5hB57ntD0
+# dcKyzw+/6NGZB955aHHgPKMdKgPFBnFK+dtuWNrSWSHLWmb3PJVedqXS4naEgSmh
 # ggMmMIIDIgYJKoZIhvcNAQkGMYIDEzCCAw8CAQEwfTBpMQswCQYDVQQGEwJVUzEX
 # MBUGA1UEChMORGlnaUNlcnQsIEluYy4xQTA/BgNVBAMTOERpZ2lDZXJ0IFRydXN0
 # ZWQgRzQgVGltZVN0YW1waW5nIFJTQTQwOTYgU0hBMjU2IDIwMjUgQ0ExAhAIT9wz
 # T35FTtvDD4/5khg1MA0GCWCGSAFlAwQCAQUAoGkwGAYJKoZIhvcNAQkDMQsGCSqG
-# SIb3DQEHATAcBgkqhkiG9w0BCQUxDxcNMjYwOTIyMTQwMzQ2WjAvBgkqhkiG9w0B
-# CQQxIgQgiPTI0v6vJbHehJSGLVSrzKmWnPLfvKqjz0cKsgfvc8cwDQYJKoZIhvcN
-# AQEBBQAEggIAAqiwVLtZ9CRALJYcMNM/ju4H1n4WoQEcxFQCvjbR1r5Asm5/X2P/
-# K4qydAG9fkkxtjhi8DeLOIUcTTzqgcSOLhQttfldEdBiETTam8H3ndl8umc34k/V
-# LgMK+JiGSEiUJqqe5h9lfySvyG0UhGx5A5uReV8DLE0K/GsMofUVHzaEfUAXFxzN
-# K4YqPzamU2PoqwGghuuBqdr+nUwlYfg+zQbWKj+uUGuZxDOV9IzsSMSSppf4Onnj
-# 2VwAv0qYDHpah46dh0yzJXm8GNQpkO26OOItAfhv1D8mzA0L909OY+hzBE/Cbrlv
-# zx/p7RtJZ3WIHlr4b5I6DOswcUjxqGjvFjDvz6+NCabV4iUK3Xk7I4sbWN53Di33
-# NbG9R85ZmI1adG/gYWY1SmhJkjFNJ+Ckvaw9YG5JvKazS5wiZa8jYu4RS0Sdc+B5
-# km28aW4QGYBtBDcaSeFFnQBR2xKTP6fmJ1NzreRBZlTIW9P2iINDJzWLTWwgVGPC
-# SeI1/O9BdkEE17EsYtzKHvkGDDahpR+PfDIktxj7nSTau3jkB5gemrwkrYV+1SXB
-# 0mb5PExoR+E/FGLXakFJPJGBdaWBSUcqoAQFA7TvPgw+4C3bHHC1UMrz3FUgH2ip
-# HY6NA01wp+7anYrepwIWK2zRnW3QEEa8TNdADt9nhJaVTwJ0xWiZDB8=
+# SIb3DQEHATAcBgkqhkiG9w0BCQUxDxcNMjYwOTIyMTgwNzIxWjAvBgkqhkiG9w0B
+# CQQxIgQgssOQppaQVmu62OhZg8wu7alkvf6mddebePsWwDO8L+YwDQYJKoZIhvcN
+# AQEBBQAEggIAUbQmBR2bYF3V2yaN5FLSQYsWRy7Y5ITWLkZN4SgVyulgyqWLEE3q
+# pXLkAbIu5LewGPEE1rJqpTzemTpuFQZmXsuoZVwtheGMk8yRtBkisDUugo0Oon1m
+# nwvNqUlhPK3EnYNlFhbKjm0siL0JaGO8O+7peTHffMo1GDKmkHd1SxT5ZMSKFBR1
+# Im9JtaLuASsNkE2DDXDeDpymHOkruxPpjUhUH6Heb0/O2EZNPRDcn0XEbwiOA9Bv
+# Vddn+S2AzNleGj9zJUSj/045dEZuu57gsLDdjpqUC6/ZEvrbWUp/PzMeLK3KLLuf
+# 0K9WN4mIR3BgNLJzTg6T8mRTn51BkP7OWm557e8eOstCCbmmQv2kaxXKQ5Xilu5L
+# 7gf+pIgFuctxH44e7hENC4NXV7da7hSoHjetxKFtczZo3q2i77o2jC8FcHwmqmm2
+# qHt306KEikZKrBsKr2Cyd9tw50JhNzi9P3/qyOCxH7qt42jc7MVaNqq+8y+6AL+d
+# PDwdPDD5wwG2v1I8356qD+87Ve/RhJh5ydSuDDGBDO5ZFKMXH5gsYsao9X9n8+j0
+# P1xGKwweixcA2Ylj7IlkFYJNMbQfwCqBq+j44M3C7ijpI7pHZzXs1hpZvKEux+Ye
+# mzYBBH1xEHDhU01cExK3pnM4UiLnnWrdBSEq8jdTopekUgtiBAXE/NA=
 # SIG # End signature block

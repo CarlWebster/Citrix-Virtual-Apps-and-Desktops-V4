@@ -1257,8 +1257,9 @@ Param(
 #	Add support for CVAD 2607/7.48
 #
 #	In Function GetComputerWMIInfo,
-#		Fixed bug where if run on a localhost that is also the Citrix DB and/or license server,
-#		the call to Get-CimInstance failed with the FQDN of the localhost
+#		Thanks to the help from Guy Leech, we fixed bug where if run on a localhost 
+#		that is also the Citrix DB and/or license server, the call to Get-CimInstance failed with the 
+#		FQDN of the localhost
 #
 #	In Function GetRolePermissions:
 #		Added new permissions
@@ -1266,7 +1267,7 @@ Param(
 #			ExtendedTracingAOT_Read		(View Always on Tracing Capture Session - Other permissions)
 #
 #	In Functions OutputMachineDetails and OutputServerOSMachine,
-#		Fixed bugs to prevent an empty machine name and from processing a SID
+#		Fixed bugs to prevent an empty machine name and to prevent processing a SID
 #
 #	In Function ProcessCitrixPolicies, add new policies
 #		AssistantApp\Enable Assistant App Notification Dialog
@@ -1408,7 +1409,7 @@ $SaveEAPreference         = $ErrorActionPreference
 $ErrorActionPreference    = 'SilentlyContinue'
 
 #stuff for report footer
-$script:MyVersion   = "4.10 Beta 1"
+$script:MyVersion   = "4.10 Beta 2"
 $Script:ScriptName  = "CVAD_Inventory_V4.ps1"
 $tmpdate            = [datetime] "09/22/2026"
 $Script:ReleaseDate = $tmpdate.ToUniversalTime().ToShortDateString()
@@ -1921,8 +1922,9 @@ Function GetComputerWMIInfo
 	# modified 17-Aug-2016 to fix a few issues with Text and HTML output
 	# modified 29-Apr-2018 to change from Arrays to New-Object System.Collections.ArrayList
 	# modified 11-Mar-2022 changed from using Get-WmiObject to Get-CimInstance
-	# modified 22-Sep-2026 fixed bug where if run on a localhost that is also the Citrix DB and/or license server,
-	#	the call to Get-CimInstance failed with the FQDN of the localhost
+	# modified 22-Sep-2026 Thanks to the help from Guy Leech, we fixed bug where if run on a localhost 
+	#	that is also the Citrix DB and/or license server, the call to Get-CimInstance failed with the 
+	#	FQDN of the localhost
 
 	#Get Computer info
 	Write-Verbose "$(Get-Date -Format G): `t`tProcessing WMI Computer information"
@@ -1945,7 +1947,7 @@ Function GetComputerWMIInfo
 	
 	Try
 	{
-		If($RemoteComputerName -like "*$env:computername*")
+		If($RemoteComputerName -match "^$env:COMPUTERNAME\b")
 		{
 			$Results = Get-CimInstance -ClassName win32_computersystem -Verbose:$False
 		}
@@ -1966,7 +1968,8 @@ Function GetComputerWMIInfo
 		@{N="TotalPhysicalRam"; E={[math]::round(($_.TotalPhysicalMemory / 1GB),0)}}, `
 		NumberOfProcessors, NumberOfLogicalProcessors
 		$Results = $Null
-		If($RemoteComputerName -like "*$env:computername*")
+		
+		If($RemoteComputerName -match "^$env:COMPUTERNAME\b")
 		{
 			[string]$ComputerOS = (Get-CimInstance -ClassName Win32_OperatingSystem -EA 0 -Verbose:$False).Caption
 		}
@@ -2033,7 +2036,7 @@ Function GetComputerWMIInfo
 
 	Try
 	{
-		If($RemoteComputerName -like "*$env:computername*")
+		If($RemoteComputerName -match "^$env:COMPUTERNAME\b")
 		{
 			$Results = Get-CimInstance -ClassName Win32_LogicalDisk -Verbose:$False
 		}
@@ -2114,7 +2117,7 @@ Function GetComputerWMIInfo
 
 	Try
 	{
-		If($RemoteComputerName -like "*$env:computername*")
+		If($RemoteComputerName -match "^$env:COMPUTERNAME\b")
 		{
 			$Results = Get-CimInstance -ClassName win32_Processor -Verbose:$False
 		}
@@ -2193,7 +2196,7 @@ Function GetComputerWMIInfo
 	
 	Try
 	{
-		If($RemoteComputerName -like "*$env:computername*")
+		If($RemoteComputerName -match "^$env:COMPUTERNAME\b")
 		{
 			$Results = Get-CimInstance -ClassName win32_networkadapterconfiguration -Verbose:$False
 		}
@@ -2228,7 +2231,7 @@ Function GetComputerWMIInfo
 			{
 				Try
 				{
-					If($RemoteComputerName -like "*$env:computername*")
+					If($RemoteComputerName -match "^$env:COMPUTERNAME\b")
 					{
 						$ThisNic = Get-CimInstance -ClassName win32_networkadapter -Verbose:$False | Where-Object {$_.index -eq $nic.index}
 					}
@@ -2343,7 +2346,7 @@ Function OutputComputerItem
 	try 
 	{
 
-		If($RemoteComputerName -like "*$env:computername*")
+		If($RemoteComputerName -match "^$env:COMPUTERNAME\b")
 		{
 			$PowerPlan = (Get-CimInstance -ClassName Win32_PowerPlan -Namespace "root\cimv2\power" -Verbose:$False |
 				Where-Object {$_.IsActive -eq $true} |
@@ -2683,7 +2686,7 @@ Function OutputNicItem
 {
 	Param([object]$Nic, [object]$ThisNic, [string]$RemoteComputerName)
 	
-	If($RemoteComputerName -like "*$env:computername*")
+	If($RemoteComputerName -match "^$env:COMPUTERNAME\b")
 	{
 		$powerMgmt = Get-CimInstance -ClassName MSPower_DeviceEnable -Namespace "root\wmi" -Verbose:$False |
 			Where-Object{$_.InstanceName -match [regex]::Escape($ThisNic.PNPDeviceID)}
@@ -2738,7 +2741,7 @@ Function OutputNicItem
 	Try
 	{
 		#https://ios.developreference.com/article/10085450/How+do+I+enable+VRSS+(Virtual+Receive+Side+Scaling)+for+a+Windows+VM+without+relying+on+Enable-NetAdapterRSS%3F
-		If($RemoteComputerName -like "*$env:computername*")
+		If($RemoteComputerName -match "^$env:COMPUTERNAME\b")
 		{
 			$RSSEnabled = (Get-CimInstance -ClassName MSFT_NetAdapterRssSettingData -Namespace "root\StandardCimV2" -ea 0 -Verbose:$False).Enabled
 		}
