@@ -6,13 +6,13 @@
 
 # This script is based on the 3.44 script
 #
-#Version 4.10
+#Version 4.10 6-Oct-2026
 #	Thanks to Ferroque Systems for lab access and help in gathering the necessary data for this update
 #
 #	Add support for CVAD 2607/7.48
 #
 #	In Function GetComputerWMIInfo,
-#		Thanks to the help from Guy Leech, we fixed bug where if run on a localhost 
+#		Thanks to the help from Guy Leech, we fixed a bug where, if run on a localhost 
 #		that is also the Citrix DB and/or license server, the call to Get-CimInstance failed with the 
 #		FQDN of the localhost
 #

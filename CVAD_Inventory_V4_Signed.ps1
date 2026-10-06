@@ -1056,9 +1056,9 @@
 	This script creates a Word, PDF, plain text, or HTML document.
 .NOTES
 	NAME: CVAD_Inventory_V4.ps1
-	VERSION: 4.10 Beta 1
+	VERSION: 4.10
 	AUTHOR: Carl Webster
-	LASTEDIT: September 22, 2026
+	LASTEDIT: October 6, 2026
 #>
 
 #endregion
@@ -1251,13 +1251,13 @@ Param(
 
 # This script is based on the 3.44 script
 #
-#Version 4.10
+#Version 4.10 06-Oct-2026
 #	Thanks to Ferroque Systems for lab access and help in gathering the necessary data for this update
 #
 #	Add support for CVAD 2607/7.48
 #
 #	In Function GetComputerWMIInfo,
-#		Thanks to the help from Guy Leech, we fixed bug where if run on a localhost 
+#		Thanks to the help from Guy Leech, we fixed a bug where, if run on a localhost 
 #		that is also the Citrix DB and/or license server, the call to Get-CimInstance failed with the 
 #		FQDN of the localhost
 #
@@ -1409,9 +1409,9 @@ $SaveEAPreference         = $ErrorActionPreference
 $ErrorActionPreference    = 'SilentlyContinue'
 
 #stuff for report footer
-$script:MyVersion   = "4.10 Beta 2"
+$script:MyVersion   = "4.10"
 $Script:ScriptName  = "CVAD_Inventory_V4.ps1"
-$tmpdate            = [datetime] "09/22/2026"
+$tmpdate            = [datetime] "10/06/2026"
 $Script:ReleaseDate = $tmpdate.ToUniversalTime().ToShortDateString()
 
 If($Null -eq $HTML)
@@ -39012,7 +39012,7 @@ Function OutputDesktopOSMachine
 		$xDesktopName = $tmp[0]
 		$tmp = $Null
 	}
-	ElseIf($Desktop.MachineName -and $Desktop.MachineName -notmatch $SidPatter)	
+	ElseIf($Desktop.MachineName -and $Desktop.MachineName -notmatch $SidPattern)	
 	{
 		# is there anything in the MachineName property and it is not a SID
 		$tmp = $Desktop.MachineName.Split("\")
@@ -42679,8 +42679,8 @@ ProcessScriptEnd
 # SIG # Begin signature block
 # MIIthQYJKoZIhvcNAQcCoIItdjCCLXICAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQU4SiWITZZMFjeqad6yBpzgGt7
-# oFyggibfMIIFjTCCBHWgAwIBAgIQDpsYjvnQLefv21DiCEAYWjANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUHAuBGjkBm2Aa763qmFQ+edQ1
+# CMeggibfMIIFjTCCBHWgAwIBAgIQDpsYjvnQLefv21DiCEAYWjANBgkqhkiG9w0B
 # AQwFADBlMQswCQYDVQQGEwJVUzEVMBMGA1UEChMMRGlnaUNlcnQgSW5jMRkwFwYD
 # VQQLExB3d3cuZGlnaWNlcnQuY29tMSQwIgYDVQQDExtEaWdpQ2VydCBBc3N1cmVk
 # IElEIFJvb3QgQ0EwHhcNMjIwODAxMDAwMDAwWhcNMzExMTA5MjM1OTU5WjBiMQsw
@@ -42891,33 +42891,33 @@ ProcessScriptEnd
 # UzEXMBUGA1UEChMORGlnaUNlcnQsIEluYy4xQTA/BgNVBAMTOERpZ2lDZXJ0IFRy
 # dXN0ZWQgRzQgQ29kZSBTaWduaW5nIFJTQTQwOTYgU0hBMzg0IDIwMjEgQ0ExAhAJ
 # uCcgOBs2YT7S+XvCw8f0MAkGBSsOAwIaBQCgQDAZBgkqhkiG9w0BCQMxDAYKKwYB
-# BAGCNwIBBDAjBgkqhkiG9w0BCQQxFgQUCKrldL0V9Kb3xYn+x7l8z7WfPrQwDQYJ
-# KoZIhvcNAQEBBQAEggIAl6iZMQFg+qntq7l/LdOfPyon+sLldWY61UTQ0rjjNHWW
-# 9bcF3654+uJeCM9i4RUF59kOAWwI43afenUR3nE62uPXRIN0NnASuXjlt52MAMBe
-# Lf8PLqKMNfmljIuNKrETgIrI7RCi/bgOKpAYr2TlqNftg/3ASn6FgWTvddzXDsr/
-# hLLYEgTxzLss4HUNbIZoSu9NiFB0wZNRp02zVUz/xYAHJ/lR1lFk/1kdy2tvNsFV
-# tBvvwR2pCenx+f4DfuGUhdageXQXwmr5UhmHwKag6SKqGCzXu8EKzoGrWcAQ/vxA
-# 8tmtmZ//vlFOuPQqEWOV2TqF2VpxLMeOmtdZzsbKm7pvnAPDrqBSv7ncejjFBdhQ
-# HW7mGyJhGmYheMuqZBlcgBOGVogsgsxS4J3CaFJQdWxW0hAc6r7OMJPvtDlcKhBo
-# rHg6DGyOyDyr66AdSbMbo1EvU7uWukCO0VVMrC1CAp10cRnVBLiM87oXe5BljzJc
-# YPrH7xXEXe7D3Tg0jrp3gE9oNX/ODPmVIvkBMoWGGLcsAdP5g3PHEfptNr4VfpPz
-# nOz0JIgrMjDzvP0sSoPwa+TT/GRCiUkt8FyQy1pEmHCyj531ZjMriXN5hB57ntD0
-# dcKyzw+/6NGZB955aHHgPKMdKgPFBnFK+dtuWNrSWSHLWmb3PJVedqXS4naEgSmh
+# BAGCNwIBBDAjBgkqhkiG9w0BCQQxFgQUSBXI41kCDmPkWpc1ZoeMsDznySYwDQYJ
+# KoZIhvcNAQEBBQAEggIAOWe5aQhkIWDwLtFkHH+a2JsCCCCIV8OcSj8vfhivlEwT
+# 1rvQgPWmhT2wt+blZ3N2BnJydUAFEbzg8WycoA/ZB/VuIMTt8sRRJySQwyqeJvpo
+# u/PVuzjI0IjbM7ENKVFOm7stwmRY6fHalEUP32DnouWB8XdFRX7labcJMbDkIZp+
+# 19PfEIbm8z70qi4RS4OInZTdpyikHC8TmB7xZe+9J/yElVHHq9PaeDWMBykTwm0P
+# 75CGdMLDqMVTrdrJbPnRj38piibQS3Xq1+gNZSkNmhSZqU7sWpw+Re7z+F+WkOtU
+# HiTKyN4oMsYjmk/QX5B22mT0fWRmoAP+jJt19uz3eJcJHdFPqqomosY8h5pk2gai
+# vCdxlZOqpCIAj5LluVhmWVcxfDVf3iasois16jQhTzP84+VeseV8Uzju+uzsfHpP
+# RVkgaeltzBI+dnZa9vVOE6KmFORAMIQAWLpt4Zgm5TSi/IznhLse4pcgn3MSNUEq
+# oiv6TLXyv/L2Uk4MgI0raiwHpANSnS4dW648zvKUKRCoPrbbQFk0HcL+bO24jwUt
+# 5kaTa7shvmUdGlcVg+IPv2/ZYPznQMV0TsRXIdd73ut0F9V+IaQSHkFXI0aEJzRH
+# wmVk9KqMmFGLzdlelvs/n1OjH/paGhWq8C+BPCRFwVHxRjVQWPddnu8yyOhfVhKh
 # ggMmMIIDIgYJKoZIhvcNAQkGMYIDEzCCAw8CAQEwfTBpMQswCQYDVQQGEwJVUzEX
 # MBUGA1UEChMORGlnaUNlcnQsIEluYy4xQTA/BgNVBAMTOERpZ2lDZXJ0IFRydXN0
 # ZWQgRzQgVGltZVN0YW1waW5nIFJTQTQwOTYgU0hBMjU2IDIwMjUgQ0ExAhAIT9wz
 # T35FTtvDD4/5khg1MA0GCWCGSAFlAwQCAQUAoGkwGAYJKoZIhvcNAQkDMQsGCSqG
-# SIb3DQEHATAcBgkqhkiG9w0BCQUxDxcNMjYwOTIyMTgwNzIxWjAvBgkqhkiG9w0B
-# CQQxIgQgssOQppaQVmu62OhZg8wu7alkvf6mddebePsWwDO8L+YwDQYJKoZIhvcN
-# AQEBBQAEggIAUbQmBR2bYF3V2yaN5FLSQYsWRy7Y5ITWLkZN4SgVyulgyqWLEE3q
-# pXLkAbIu5LewGPEE1rJqpTzemTpuFQZmXsuoZVwtheGMk8yRtBkisDUugo0Oon1m
-# nwvNqUlhPK3EnYNlFhbKjm0siL0JaGO8O+7peTHffMo1GDKmkHd1SxT5ZMSKFBR1
-# Im9JtaLuASsNkE2DDXDeDpymHOkruxPpjUhUH6Heb0/O2EZNPRDcn0XEbwiOA9Bv
-# Vddn+S2AzNleGj9zJUSj/045dEZuu57gsLDdjpqUC6/ZEvrbWUp/PzMeLK3KLLuf
-# 0K9WN4mIR3BgNLJzTg6T8mRTn51BkP7OWm557e8eOstCCbmmQv2kaxXKQ5Xilu5L
-# 7gf+pIgFuctxH44e7hENC4NXV7da7hSoHjetxKFtczZo3q2i77o2jC8FcHwmqmm2
-# qHt306KEikZKrBsKr2Cyd9tw50JhNzi9P3/qyOCxH7qt42jc7MVaNqq+8y+6AL+d
-# PDwdPDD5wwG2v1I8356qD+87Ve/RhJh5ydSuDDGBDO5ZFKMXH5gsYsao9X9n8+j0
-# P1xGKwweixcA2Ylj7IlkFYJNMbQfwCqBq+j44M3C7ijpI7pHZzXs1hpZvKEux+Ye
-# mzYBBH1xEHDhU01cExK3pnM4UiLnnWrdBSEq8jdTopekUgtiBAXE/NA=
+# SIb3DQEHATAcBgkqhkiG9w0BCQUxDxcNMjYxMDA2MTUzNDExWjAvBgkqhkiG9w0B
+# CQQxIgQgXAeDpLtH0jLCPxqiA6+O0T19Nj/zLJGjDVV1dBlg6hgwDQYJKoZIhvcN
+# AQEBBQAEggIAGyugpdNuZa+Bf83e+7hPIz/aAihS9VC6S0J2s7fbfg7CDVsD3m79
+# AtNgDn/1BLxcoCZ4Po1mWec03db+ZUVC+V1VDlBnD619Iix8WxRnFWue9ubKnZ6a
+# DJIiIPqCHWHvqsYzXja6+iinyX/jQuECI2g1NPznGvqVEpxmO3tO1XImH1HWtehF
+# LG37wIyl1U86gwnlMCx4MvV9AsBKHhZjlRmYpI+348s03ODUWyL2wL+uRquROVUC
+# ZhK8EMHcvv8O358nUz9kumpM5dTBpeaJie0mAo5hxYcmYaAVjEnoIYHFTb2lksG6
+# U0iAe4I8cxjZ7ahx+szfdTcIkgWLHqAJARE4DNi5Fsodhw1CF07PSMmVWXIGaede
+# UBJvQIaRx/xKr8mAxnYCSfzutgE2tMuA1m71ctK6wPKe+nCaVKwl/6EH7mZnNOsJ
+# f5JXEHKD2fv6zTwoXf8MBfJaeLhPhNwjYPiWtbf88p4k2cfaJXo3ag2YgqKpXaAY
+# 7RwFE+xmqh5FTKKGHqs0VKJ/U48JVv3vjuWmT8d8LUsw58XxrZbS9k2U4Anx3RfU
+# GoKkROzWyVL4Hse+OsSVhKB2Q/8Y64QvJKmH+F3O7EyGzxgmFPVgeXYw7k4tLpv3
+# NbZsMOYwmyXEnqI2iZgdfyWvYgy6VGGfyOttb8a04T2qKxnSGLKOhiE=
 # SIG # End signature block

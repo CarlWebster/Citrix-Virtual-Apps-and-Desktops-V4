@@ -1056,9 +1056,9 @@
 	This script creates a Word, PDF, plain text, or HTML document.
 .NOTES
 	NAME: CVAD_Inventory_V4.ps1
-	VERSION: 4.10 Beta 1
+	VERSION: 4.10
 	AUTHOR: Carl Webster
-	LASTEDIT: September 22, 2026
+	LASTEDIT: October 6, 2026
 #>
 
 #endregion
@@ -1251,13 +1251,13 @@ Param(
 
 # This script is based on the 3.44 script
 #
-#Version 4.10
+#Version 4.10 06-Oct-2026
 #	Thanks to Ferroque Systems for lab access and help in gathering the necessary data for this update
 #
 #	Add support for CVAD 2607/7.48
 #
 #	In Function GetComputerWMIInfo,
-#		Thanks to the help from Guy Leech, we fixed bug where if run on a localhost 
+#		Thanks to the help from Guy Leech, we fixed a bug where, if run on a localhost 
 #		that is also the Citrix DB and/or license server, the call to Get-CimInstance failed with the 
 #		FQDN of the localhost
 #
@@ -1409,9 +1409,9 @@ $SaveEAPreference         = $ErrorActionPreference
 $ErrorActionPreference    = 'SilentlyContinue'
 
 #stuff for report footer
-$script:MyVersion   = "4.10 Beta 2"
+$script:MyVersion   = "4.10"
 $Script:ScriptName  = "CVAD_Inventory_V4.ps1"
-$tmpdate            = [datetime] "09/22/2026"
+$tmpdate            = [datetime] "10/06/2026"
 $Script:ReleaseDate = $tmpdate.ToUniversalTime().ToShortDateString()
 
 If($Null -eq $HTML)
@@ -39012,7 +39012,7 @@ Function OutputDesktopOSMachine
 		$xDesktopName = $tmp[0]
 		$tmp = $Null
 	}
-	ElseIf($Desktop.MachineName -and $Desktop.MachineName -notmatch $SidPatter)	
+	ElseIf($Desktop.MachineName -and $Desktop.MachineName -notmatch $SidPattern)	
 	{
 		# is there anything in the MachineName property and it is not a SID
 		$tmp = $Desktop.MachineName.Split("\")
