@@ -1266,7 +1266,7 @@ Param(
 #			ExtendedTracingAOT_Manage	(Manage Always on Tracing Capture Sessions - Other permissions)
 #			ExtendedTracingAOT_Read		(View Always on Tracing Capture Session - Other permissions)
 #
-#	In Functions OutputMachineDetails and OutputServerOSMachine,
+#	In Functions OutputDesktopOSMachine, OutputMachineDetails, and OutputServerOSMachine,
 #		Fixed bugs to prevent an empty machine name and to prevent processing a SID
 #
 #	In Function ProcessCitrixPolicies, add new policies
@@ -1922,7 +1922,7 @@ Function GetComputerWMIInfo
 	# modified 17-Aug-2016 to fix a few issues with Text and HTML output
 	# modified 29-Apr-2018 to change from Arrays to New-Object System.Collections.ArrayList
 	# modified 11-Mar-2022 changed from using Get-WmiObject to Get-CimInstance
-	# modified 22-Sep-2026 Thanks to the help from Guy Leech, we fixed bug where if run on a localhost 
+	# modified 22-Sep-2026 Thanks to the help from Guy Leech, we fixed a bug where, if run on a localhost 
 	#	that is also the Citrix DB and/or license server, the call to Get-CimInstance failed with the 
 	#	FQDN of the localhost
 
@@ -8489,16 +8489,21 @@ Function OutputMachineDetails
 {
 	Param([object] $Machine)
 	
-	#if HostedMachineName is empty, like for RemotePC and unregistered machines, use the first part of DNSName
-	$tmp = $Machine.DNSName.Split(".")
-	$xMachineName = $tmp[0]
-	$tmp = $Null
+	# Regex pattern for a valid Windows SID
+	$SidPattern = "^S-\d-\d+(-\d+)*$"
 
 	#don't use the MachineName property as it is a SID
 	If($Machine.DNSName)	# is there anything in the DNSName property
 	{
 		$tmp = $Machine.DNSName.Split(".")
 		$xMachineName = $tmp[0]
+		$tmp = $Null
+	}
+	ElseIf($Machine.MachineName -and $Machine.MachineName -notmatch $SidPattern)	
+	{
+		# is there anything in the MachineName property and it is not a SID
+		$tmp = $Machine.MachineName.Split("\")
+		$xMachineName = $tmp[1]
 		$tmp = $Null
 	}
 	ElseIf($Machine.HostedMachineName)	# is there anything in the HostedMachineName property
@@ -42679,8 +42684,8 @@ ProcessScriptEnd
 # SIG # Begin signature block
 # MIIthQYJKoZIhvcNAQcCoIItdjCCLXICAQExCzAJBgUrDgMCGgUAMGkGCisGAQQB
 # gjcCAQSgWzBZMDQGCisGAQQBgjcCAR4wJgIDAQAABBAfzDtgWUsITrck0sYpfvNR
-# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQUHAuBGjkBm2Aa763qmFQ+edQ1
-# CMeggibfMIIFjTCCBHWgAwIBAgIQDpsYjvnQLefv21DiCEAYWjANBgkqhkiG9w0B
+# AgEAAgEAAgEAAgEAAgEAMCEwCQYFKw4DAhoFAAQU8mcOSZLnmB+CsgSL2tH7rPbC
+# ZjCggibfMIIFjTCCBHWgAwIBAgIQDpsYjvnQLefv21DiCEAYWjANBgkqhkiG9w0B
 # AQwFADBlMQswCQYDVQQGEwJVUzEVMBMGA1UEChMMRGlnaUNlcnQgSW5jMRkwFwYD
 # VQQLExB3d3cuZGlnaWNlcnQuY29tMSQwIgYDVQQDExtEaWdpQ2VydCBBc3N1cmVk
 # IElEIFJvb3QgQ0EwHhcNMjIwODAxMDAwMDAwWhcNMzExMTA5MjM1OTU5WjBiMQsw
@@ -42891,33 +42896,33 @@ ProcessScriptEnd
 # UzEXMBUGA1UEChMORGlnaUNlcnQsIEluYy4xQTA/BgNVBAMTOERpZ2lDZXJ0IFRy
 # dXN0ZWQgRzQgQ29kZSBTaWduaW5nIFJTQTQwOTYgU0hBMzg0IDIwMjEgQ0ExAhAJ
 # uCcgOBs2YT7S+XvCw8f0MAkGBSsOAwIaBQCgQDAZBgkqhkiG9w0BCQMxDAYKKwYB
-# BAGCNwIBBDAjBgkqhkiG9w0BCQQxFgQUSBXI41kCDmPkWpc1ZoeMsDznySYwDQYJ
-# KoZIhvcNAQEBBQAEggIAOWe5aQhkIWDwLtFkHH+a2JsCCCCIV8OcSj8vfhivlEwT
-# 1rvQgPWmhT2wt+blZ3N2BnJydUAFEbzg8WycoA/ZB/VuIMTt8sRRJySQwyqeJvpo
-# u/PVuzjI0IjbM7ENKVFOm7stwmRY6fHalEUP32DnouWB8XdFRX7labcJMbDkIZp+
-# 19PfEIbm8z70qi4RS4OInZTdpyikHC8TmB7xZe+9J/yElVHHq9PaeDWMBykTwm0P
-# 75CGdMLDqMVTrdrJbPnRj38piibQS3Xq1+gNZSkNmhSZqU7sWpw+Re7z+F+WkOtU
-# HiTKyN4oMsYjmk/QX5B22mT0fWRmoAP+jJt19uz3eJcJHdFPqqomosY8h5pk2gai
-# vCdxlZOqpCIAj5LluVhmWVcxfDVf3iasois16jQhTzP84+VeseV8Uzju+uzsfHpP
-# RVkgaeltzBI+dnZa9vVOE6KmFORAMIQAWLpt4Zgm5TSi/IznhLse4pcgn3MSNUEq
-# oiv6TLXyv/L2Uk4MgI0raiwHpANSnS4dW648zvKUKRCoPrbbQFk0HcL+bO24jwUt
-# 5kaTa7shvmUdGlcVg+IPv2/ZYPznQMV0TsRXIdd73ut0F9V+IaQSHkFXI0aEJzRH
-# wmVk9KqMmFGLzdlelvs/n1OjH/paGhWq8C+BPCRFwVHxRjVQWPddnu8yyOhfVhKh
+# BAGCNwIBBDAjBgkqhkiG9w0BCQQxFgQUov49f+sdGl1/mTawiTMicGOZEGMwDQYJ
+# KoZIhvcNAQEBBQAEggIAEB8b8uZMvycGYX2TBb00j1cTN+UfsUDqdCxnlslt915Y
+# l/wUmxo+KtNp1gX+2JWl7f49M/WSbm+Qa2mMGtX9tLPDhzTcMmKHpBFrsXsFQOeW
+# hENx31ReMKcVN7CzAq8zihHLspYsmCjAVizNmELukydbgjGn0zzYFBWYYleyvQH9
+# XXS7hmmt1vGE//1zJCODFeri3Bo3m0APYl7wfxM387WpSkAm3O9p+vPFHACbSVSp
+# m5d564VUDaJZdI+TAFRl6Mkc/hL23sN/imdxQQolSxRM8XIRRm7ylu/8wVdLkbgf
+# Ge092wUEg+pooJURgLbABRpsNzVc1Z/FR6VO3Xpw2Or3Sn8WwU3Jea1r3+NHAwMw
+# TfiZE0ibyDtSQzYAiy0y+NrvmNgxrXvwoblxkL6jGukflO1LTKhYmEbq+0B/s7Vw
+# /BsZ8HN1gOc3q/m0B3BQrTxpDHrdd/Z2KhTYFlXXcHGHbbaby5tXotwZOMYhM+5m
+# 7n9A4QUjG4hRdK4nvBG37JZRebbiC6/Bav68yAu8qUo/DZPMl006FxNsqdqYYSFx
+# cwmLE84uZ61LRZ+9DkxzT7ENnJ80R/+3fCzUvnixRudcayNU2ZeccdE9UTEyi1wJ
+# FBqiQn2504l3HNJBqSup8riPRHWwU3aISg0wl0PIITw0Qo3mEe7IJ4c437s+oAah
 # ggMmMIIDIgYJKoZIhvcNAQkGMYIDEzCCAw8CAQEwfTBpMQswCQYDVQQGEwJVUzEX
 # MBUGA1UEChMORGlnaUNlcnQsIEluYy4xQTA/BgNVBAMTOERpZ2lDZXJ0IFRydXN0
 # ZWQgRzQgVGltZVN0YW1waW5nIFJTQTQwOTYgU0hBMjU2IDIwMjUgQ0ExAhAIT9wz
 # T35FTtvDD4/5khg1MA0GCWCGSAFlAwQCAQUAoGkwGAYJKoZIhvcNAQkDMQsGCSqG
-# SIb3DQEHATAcBgkqhkiG9w0BCQUxDxcNMjYxMDA2MTUzNDExWjAvBgkqhkiG9w0B
-# CQQxIgQgXAeDpLtH0jLCPxqiA6+O0T19Nj/zLJGjDVV1dBlg6hgwDQYJKoZIhvcN
-# AQEBBQAEggIAGyugpdNuZa+Bf83e+7hPIz/aAihS9VC6S0J2s7fbfg7CDVsD3m79
-# AtNgDn/1BLxcoCZ4Po1mWec03db+ZUVC+V1VDlBnD619Iix8WxRnFWue9ubKnZ6a
-# DJIiIPqCHWHvqsYzXja6+iinyX/jQuECI2g1NPznGvqVEpxmO3tO1XImH1HWtehF
-# LG37wIyl1U86gwnlMCx4MvV9AsBKHhZjlRmYpI+348s03ODUWyL2wL+uRquROVUC
-# ZhK8EMHcvv8O358nUz9kumpM5dTBpeaJie0mAo5hxYcmYaAVjEnoIYHFTb2lksG6
-# U0iAe4I8cxjZ7ahx+szfdTcIkgWLHqAJARE4DNi5Fsodhw1CF07PSMmVWXIGaede
-# UBJvQIaRx/xKr8mAxnYCSfzutgE2tMuA1m71ctK6wPKe+nCaVKwl/6EH7mZnNOsJ
-# f5JXEHKD2fv6zTwoXf8MBfJaeLhPhNwjYPiWtbf88p4k2cfaJXo3ag2YgqKpXaAY
-# 7RwFE+xmqh5FTKKGHqs0VKJ/U48JVv3vjuWmT8d8LUsw58XxrZbS9k2U4Anx3RfU
-# GoKkROzWyVL4Hse+OsSVhKB2Q/8Y64QvJKmH+F3O7EyGzxgmFPVgeXYw7k4tLpv3
-# NbZsMOYwmyXEnqI2iZgdfyWvYgy6VGGfyOttb8a04T2qKxnSGLKOhiE=
+# SIb3DQEHATAcBgkqhkiG9w0BCQUxDxcNMjYxMDA2MTgyMzI2WjAvBgkqhkiG9w0B
+# CQQxIgQgw72YyCEvCaWC+iTn6qLVoxePQIwymqTpaxgqmhz2hZMwDQYJKoZIhvcN
+# AQEBBQAEggIAFRC3jOI2hlr05aGaiT/KpWFg+Bae6aarwG682YvVjR4pmjBSeGeJ
+# UCVDDl3arMXBKsKwuHdevt2BuzGTzWUz/B8JkCwjyWApUalu3KbH3AKb3PbM6wU5
+# x2gRt1ylFdfxN0Hiv/MRd9IyTRlJB+NvXKTctBbUyU/PP1qyPBwlhF7CXg/nP2ZR
+# htcd9/ObRXCsxz6pX+6tGFCKJn/Mg16kp8820XgrUoYu0M4giDf9+5uiI47Az0gn
+# iDjsZOla52BB/Oc7zqhLRAj2a3HZDo5oWgdg0lTPCp3Y7m5L6NfCBUI2HrX++UtD
+# RGU0FyDmNWFJHMULcqmq7xxh/6BKYfH6T3vWaYmE65WF6BttONtEMe7t8XCS/jZ4
+# we6lCfRFVRZKduPqyYwUceKk+Bn5Z5PsKeflzfK2V20Uf+I0tqy8KW8U9iF+TBU/
+# eDY3lTvP//SkUjGf+VgJimu+l2iCEIKBTi/4xsmzVMm5Y2qB+4o0xweWTqxpG8Tf
+# OAS0x1CgVC7qxM9lFg9Ebmt5uCKs7xjrz2GaKzzcy6NHap2zm5mKzSRP3cUUrD44
+# s4tVvb8tie9FesjiM26k1GDZ5QlxzbhyDS6KYzjMKF/iIYPkLQb3fhm3LU7LcCjI
+# 4WybIq5iNMiIJT1ERhPR2SO9Mb77O7PNCGzSouYN3sfc2uO0DTfzKH8=
 # SIG # End signature block

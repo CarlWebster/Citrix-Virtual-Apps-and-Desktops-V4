@@ -21,7 +21,7 @@
 #			ExtendedTracingAOT_Manage	(Manage Always on Tracing Capture Sessions - Other permissions)
 #			ExtendedTracingAOT_Read		(View Always on Tracing Capture Session - Other permissions)
 #
-#	In Functions OutputMachineDetails and OutputServerOSMachine,
+#	In Functions OutputDesktopOSMachine, OutputMachineDetails, and OutputServerOSMachine,
 #		Fixed bugs to prevent an empty machine name and to prevent processing a SID
 #
 #	In Function ProcessCitrixPolicies, add new policies

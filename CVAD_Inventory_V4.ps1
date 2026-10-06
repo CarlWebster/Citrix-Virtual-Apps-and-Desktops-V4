@@ -1266,7 +1266,7 @@ Param(
 #			ExtendedTracingAOT_Manage	(Manage Always on Tracing Capture Sessions - Other permissions)
 #			ExtendedTracingAOT_Read		(View Always on Tracing Capture Session - Other permissions)
 #
-#	In Functions OutputMachineDetails and OutputServerOSMachine,
+#	In Functions OutputDesktopOSMachine, OutputMachineDetails, and OutputServerOSMachine,
 #		Fixed bugs to prevent an empty machine name and to prevent processing a SID
 #
 #	In Function ProcessCitrixPolicies, add new policies
@@ -1922,7 +1922,7 @@ Function GetComputerWMIInfo
 	# modified 17-Aug-2016 to fix a few issues with Text and HTML output
 	# modified 29-Apr-2018 to change from Arrays to New-Object System.Collections.ArrayList
 	# modified 11-Mar-2022 changed from using Get-WmiObject to Get-CimInstance
-	# modified 22-Sep-2026 Thanks to the help from Guy Leech, we fixed bug where if run on a localhost 
+	# modified 22-Sep-2026 Thanks to the help from Guy Leech, we fixed a bug where, if run on a localhost 
 	#	that is also the Citrix DB and/or license server, the call to Get-CimInstance failed with the 
 	#	FQDN of the localhost
 
@@ -8489,16 +8489,21 @@ Function OutputMachineDetails
 {
 	Param([object] $Machine)
 	
-	#if HostedMachineName is empty, like for RemotePC and unregistered machines, use the first part of DNSName
-	$tmp = $Machine.DNSName.Split(".")
-	$xMachineName = $tmp[0]
-	$tmp = $Null
+	# Regex pattern for a valid Windows SID
+	$SidPattern = "^S-\d-\d+(-\d+)*$"
 
 	#don't use the MachineName property as it is a SID
 	If($Machine.DNSName)	# is there anything in the DNSName property
 	{
 		$tmp = $Machine.DNSName.Split(".")
 		$xMachineName = $tmp[0]
+		$tmp = $Null
+	}
+	ElseIf($Machine.MachineName -and $Machine.MachineName -notmatch $SidPattern)	
+	{
+		# is there anything in the MachineName property and it is not a SID
+		$tmp = $Machine.MachineName.Split("\")
+		$xMachineName = $tmp[1]
 		$tmp = $Null
 	}
 	ElseIf($Machine.HostedMachineName)	# is there anything in the HostedMachineName property
